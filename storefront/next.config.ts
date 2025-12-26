@@ -17,6 +17,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Proxy to Medusa backend to avoid CORS issues
+  async rewrites() {
+    return [
+      {
+        source: '/store/:path*',
+        destination: 'http://localhost:9000/store/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
