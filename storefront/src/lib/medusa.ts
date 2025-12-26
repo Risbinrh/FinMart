@@ -1,7 +1,7 @@
 // Medusa API Client for FreshCatch Storefront
 
-const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '';
-const REGION_ID = 'reg_01KD7TW42F9BX7SV1W1V0WTF5D'; // India region
+const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || 'pk_427cce2a75049dde35ff19cb44f3fc18cc1109893df8c6870064cf64bbff283e';
+const REGION_ID = 'reg_01KDCHTTP9F4462Q0CFSSERPNN'; // India region (Corrected)
 
 // Types
 export interface Product {
@@ -166,12 +166,13 @@ class MedusaClient {
 
   constructor() {
     this.publishableKey = PUBLISHABLE_API_KEY;
+    console.log('[DEBUG] Initializing MedusaClient with key:', this.publishableKey);
   }
 
-  // Get base URL dynamically (empty for browser proxy, full URL for server)
+  // Get base URL dynamically
   private getBaseUrl(): string {
     if (typeof window !== 'undefined') {
-      return ''; // Use Next.js proxy in browser
+      return '/api'; // Use Next.js API route proxy in browser
     }
     return process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000';
   }
@@ -188,6 +189,14 @@ class MedusaClient {
 
     const baseUrl = this.getBaseUrl();
 
+    // Debug logging
+    console.log('[DEBUG] MedusaClient.fetch:', {
+      endpoint,
+      baseUrl,
+      publishableKey: this.publishableKey,
+      headers,
+    });
+
     try {
       const response = await fetch(`${baseUrl}${endpoint}`, {
         ...options,
@@ -197,6 +206,7 @@ class MedusaClient {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
+        console.error('[DEBUG] Response error:', response.status, error);
         throw new Error(error.message || `HTTP error! status: ${response.status}`);
       }
 
