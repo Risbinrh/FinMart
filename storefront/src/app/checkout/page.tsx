@@ -38,7 +38,7 @@ const paymentMethods = [
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, refreshCart } = useCart();
-  const { customer } = useAuth();
+  const { customer, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [step, setStep] = useState<'checkout' | 'processing' | 'success'>('checkout');
   const [selectedSlot, setSelectedSlot] = useState('morning');
@@ -54,6 +54,13 @@ export default function CheckoutPage() {
     postal_code: '',
     country_code: 'in',
   });
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated && step !== 'success') {
+      router.push('/login?redirect=/checkout');
+    }
+  }, [authLoading, isAuthenticated, router, step]);
 
   // Pre-fill address from customer if available
   useEffect(() => {
@@ -79,6 +86,27 @@ export default function CheckoutPage() {
       }
     }
   }, [customer]);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render checkout if not authenticated (will redirect)
+  if (!isAuthenticated && step !== 'success') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!cart || cart.items.length === 0) {
     if (step === 'success') {

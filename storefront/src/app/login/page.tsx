@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Fish, Phone, Loader2, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
   const { login, isLoading } = useAuth();
 
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
@@ -88,7 +90,7 @@ export default function LoginPage() {
       setStep('success');
       // Simulate login
       await new Promise(resolve => setTimeout(resolve, 1500));
-      router.push('/');
+      router.push(redirectTo);
     } else {
       setError('Invalid OTP. Please try again.');
     }

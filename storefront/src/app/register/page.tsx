@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Fish, User, Phone, Loader2, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
 
   const [step, setStep] = useState<'details' | 'otp' | 'success'>('details');
   const [formData, setFormData] = useState({
@@ -97,7 +99,7 @@ export default function RegisterPage() {
     if (enteredOtp === generatedOtp) {
       setStep('success');
       await new Promise(resolve => setTimeout(resolve, 1500));
-      router.push('/');
+      router.push(redirectTo);
     } else {
       setError('Invalid OTP. Please try again.');
     }
