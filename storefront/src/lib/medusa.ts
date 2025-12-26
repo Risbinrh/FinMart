@@ -135,9 +135,11 @@ export interface Customer {
   first_name: string;
   last_name: string;
   phone: string | null;
-  billing_address: Address | null;
-  shipping_addresses: Address[];
-  metadata: Record<string, unknown> | null;
+  billing_address?: Address | null;
+  shipping_addresses?: Address[];
+  has_account?: boolean;
+  created_at?: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface Order {

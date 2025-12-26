@@ -9,7 +9,9 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithPhone: (phone: string, name?: string) => void; // Demo mode phone login
   register: (data: { email: string; password: string; first_name: string; last_name: string; phone?: string }) => Promise<void>;
+  registerWithPhone: (phone: string, firstName: string, lastName?: string) => void; // Demo mode phone register
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Customer>) => Promise<void>;
   addAddress: (address: Partial<Address>) => Promise<void>;
@@ -21,6 +23,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DEMO_CUSTOMER_KEY = 'freshcatch_demo_customer';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { customer } = await medusa.getCustomer();
       setCustomer(customer);
     } catch {
+      // Check for demo customer in localStorage
+      if (typeof window !== 'undefined') {
+        const demoCustomer = localStorage.getItem(DEMO_CUSTOMER_KEY);
+        if (demoCustomer) {
+          setCustomer(JSON.parse(demoCustomer));
+          return;
+        }
+      }
       setCustomer(null);
     }
   }, []);
@@ -47,6 +59,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     checkAuth();
   }, [refreshCustomer]);
+
+  // Demo mode: Login with phone (creates fake customer)
+  const loginWithPhone = useCallback((phone: string, name?: string) => {
+    const demoCustomer: Customer = {
+      id: `demo_${Date.now()}`,
+      email: `${phone}@demo.freshcatch.in`,
+      first_name: name || 'Customer',
+      last_name: '',
+      phone: phone,
+      has_account: true,
+      shipping_addresses: [],
+      created_at: new Date().toISOString(),
+    };
+    setCustomer(demoCustomer);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(DEMO_CUSTOMER_KEY, JSON.stringify(demoCustomer));
+    }
+  }, []);
+
+  // Demo mode: Register with phone (creates fake customer)
+  const registerWithPhone = useCallback((phone: string, firstName: string, lastName?: string) => {
+    const demoCustomer: Customer = {
+      id: `demo_${Date.now()}`,
+      email: `${phone}@demo.freshcatch.in`,
+      first_name: firstName,
+      last_name: lastName || '',
+      phone: phone,
+      has_account: true,
+      shipping_addresses: [],
+      created_at: new Date().toISOString(),
+    };
+    setCustomer(demoCustomer);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(DEMO_CUSTOMER_KEY, JSON.stringify(demoCustomer));
+    }
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -90,10 +138,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       await medusa.logout();
       setCustomer(null);
+      // Clear demo customer from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(DEMO_CUSTOMER_KEY);
+      }
     } catch (err) {
       console.error('Logout failed:', err);
       // Still clear customer on frontend even if backend fails
       setCustomer(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(DEMO_CUSTOMER_KEY);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +226,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         login,
+        loginWithPhone,
         register,
+        registerWithPhone,
         logout,
         updateProfile,
         addAddress,

@@ -14,7 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/';
-  const { login, isLoading } = useAuth();
+  const { loginWithPhone } = useAuth();
 
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
   const [phone, setPhone] = useState('');
@@ -87,8 +87,10 @@ export default function LoginPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (enteredOtp === generatedOtp) {
+      // Login with phone (stores in context + localStorage)
+      loginWithPhone(phone);
       setStep('success');
-      // Simulate login
+      // Wait before redirect
       await new Promise(resolve => setTimeout(resolve, 1500));
       router.push(redirectTo);
     } else {

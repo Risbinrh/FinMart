@@ -7,11 +7,13 @@ import { Fish, User, Phone, Loader2, ArrowRight, CheckCircle } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useAuth } from '@/context/AuthContext';
 
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/';
+  const { registerWithPhone } = useAuth();
 
   const [step, setStep] = useState<'details' | 'otp' | 'success'>('details');
   const [formData, setFormData] = useState({
@@ -97,6 +99,8 @@ export default function RegisterPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (enteredOtp === generatedOtp) {
+      // Register with phone (stores in context + localStorage)
+      registerWithPhone(formData.phone, formData.first_name, formData.last_name);
       setStep('success');
       await new Promise(resolve => setTimeout(resolve, 1500));
       router.push(redirectTo);
