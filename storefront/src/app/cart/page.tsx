@@ -3,88 +3,51 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-
-interface CartItem {
-  id: string;
-  name: string;
-  tamilName: string;
-  image: string;
-  price: number;
-  quantity: number;
-  unit: string;
-  cleaningOption: string;
-  cleaningPrice: number;
-}
-
-const initialCartItems: CartItem[] = [
-  {
-    id: '1',
-    name: 'Seer Fish',
-    tamilName: 'வஞ்சிரம்',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop',
-    price: 750,
-    quantity: 1,
-    unit: 'kg',
-    cleaningOption: 'Cleaned',
-    cleaningPrice: 20,
-  },
-  {
-    id: '7',
-    name: 'Tiger Prawns',
-    tamilName: 'புலி இறால்',
-    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=200&h=200&fit=crop',
-    price: 780,
-    quantity: 0.5,
-    unit: 'kg',
-    cleaningOption: 'Cleaned & Deveined',
-    cleaningPrice: 30,
-  },
-  {
-    id: '3',
-    name: 'Pomfret (White)',
-    tamilName: 'வெள்ளை வாவல்',
-    image: 'https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=200&h=200&fit=crop',
-    price: 650,
-    quantity: 1,
-    unit: 'kg',
-    cleaningOption: 'Whole',
-    cleaningPrice: 0,
-  },
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCart } from '@/context/CartContext';
+import { formatPrice } from '@/lib/medusa';
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+  const { cart, isLoading, updateQuantity, removeFromCart } = useCart();
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [discount, setDiscount] = useState(0);
+  const [updatingItems, setUpdatingItems] = useState<Record<string, boolean>>({});
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(0.5, item.quantity + delta) }
-          : item
-      )
-    );
+  const handleUpdateQuantity = async (lineItemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      await handleRemoveItem(lineItemId);
+      return;
+    }
+    setUpdatingItems(prev => ({ ...prev, [lineItemId]: true }));
+    try {
+      await updateQuantity(lineItemId, newQuantity);
+    } finally {
+      setUpdatingItems(prev => ({ ...prev, [lineItemId]: false }));
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
+  const handleRemoveItem = async (lineItemId: string) => {
+    setUpdatingItems(prev => ({ ...prev, [lineItemId]: true }));
+    try {
+      await removeFromCart(lineItemId);
+    } finally {
+      setUpdatingItems(prev => ({ ...prev, [lineItemId]: false }));
+    }
   };
 
   const applyCoupon = () => {
     if (couponCode.toUpperCase() === 'FRESH50') {
       setAppliedCoupon('FRESH50');
-      setDiscount(50);
+      setDiscount(5000); // 50 rupees in paise
     } else if (couponCode.toUpperCase() === 'FIRST100') {
       setAppliedCoupon('FIRST100');
-      setDiscount(100);
+      setDiscount(10000); // 100 rupees in paise
     } else {
       alert('Invalid coupon code');
     }
@@ -96,14 +59,47 @@ export default function CartPage() {
     setCouponCode('');
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + (item.price + item.cleaningPrice) * item.quantity,
-    0
-  );
-  const deliveryCharge = subtotal >= 300 ? 0 : 30;
+  const subtotal = cart?.subtotal || 0;
+  const deliveryCharge = subtotal >= 30000 ? 0 : 3000; // Free delivery above ₹300
   const total = subtotal - discount + deliveryCharge;
 
-  if (cartItems.length === 0) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="bg-primary/5 border-b">
+          <div className="container mx-auto px-4 py-6">
+            <Skeleton className="h-9 w-48 mb-2" />
+            <Skeleton className="h-5 w-32" />
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              {[1, 2, 3].map(i => (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <div className="flex gap-4">
+                      <Skeleton className="h-24 w-24 rounded-lg" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-8 w-32" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div>
+              <Skeleton className="h-96 rounded-lg" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!cart || cart.items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
@@ -131,7 +127,7 @@ export default function CartPage() {
       <div className="bg-primary/5 border-b">
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-2xl sm:text-3xl font-bold">Shopping Cart</h1>
-          <p className="text-muted-foreground">{cartItems.length} items in your cart</p>
+          <p className="text-muted-foreground">{cart.items.length} items in your cart</p>
         </div>
       </div>
 
@@ -139,15 +135,15 @@ export default function CartPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item) => (
+            {cart.items.map((item) => (
               <Card key={item.id}>
                 <CardContent className="p-4">
                   <div className="flex gap-4">
                     {/* Image */}
                     <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-lg overflow-hidden shrink-0">
                       <Image
-                        src={item.image}
-                        alt={item.name}
+                        src={item.thumbnail || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop'}
+                        alt={item.title}
                         fill
                         className="object-cover"
                       />
@@ -158,30 +154,35 @@ export default function CartPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <Link
-                            href={`/products/${item.id}`}
+                            href={`/products/${item.product?.handle || item.id}`}
                             className="font-semibold hover:text-primary transition-colors"
                           >
-                            {item.name}
+                            {item.title}
                           </Link>
-                          <p className="text-sm text-muted-foreground">
-                            {item.tamilName}
-                          </p>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {item.description}
+                            </p>
+                          )}
+                          {item.variant?.title && (
+                            <p className="text-sm text-muted-foreground">
+                              {item.variant.title}
+                            </p>
+                          )}
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="text-muted-foreground hover:text-destructive shrink-0"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
+                          disabled={updatingItems[item.id]}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {updatingItems[item.id] ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
-                      </div>
-
-                      <div className="mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {item.cleaningOption}
-                          {item.cleaningPrice > 0 && ` (+₹${item.cleaningPrice})`}
-                        </Badge>
                       </div>
 
                       <div className="flex items-center justify-between mt-3">
@@ -191,19 +192,20 @@ export default function CartPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, -0.5)}
-                            disabled={item.quantity <= 0.5}
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            disabled={item.quantity <= 1 || updatingItems[item.id]}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="w-14 text-center text-sm font-medium">
-                            {item.quantity} {item.unit}
+                          <span className="w-10 text-center text-sm font-medium">
+                            {item.quantity}
                           </span>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, 0.5)}
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            disabled={updatingItems[item.id]}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -212,10 +214,10 @@ export default function CartPage() {
                         {/* Price */}
                         <div className="text-right">
                           <p className="font-bold text-primary">
-                            ₹{((item.price + item.cleaningPrice) * item.quantity).toFixed(0)}
+                            {formatPrice(item.total)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            ₹{item.price + item.cleaningPrice}/{item.unit}
+                            {formatPrice(item.unit_price)} each
                           </p>
                         </div>
                       </div>
@@ -255,7 +257,7 @@ export default function CartPage() {
                           {appliedCoupon}
                         </span>
                         <span className="text-sm text-green-600">
-                          (-₹{discount})
+                          (-{formatPrice(discount)})
                         </span>
                       </div>
                       <Button
@@ -290,12 +292,12 @@ export default function CartPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>₹{subtotal.toFixed(0)}</span>
+                    <span>{formatPrice(subtotal)}</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount</span>
-                      <span>-₹{discount}</span>
+                      <span>-{formatPrice(discount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
@@ -304,13 +306,13 @@ export default function CartPage() {
                       {deliveryCharge === 0 ? (
                         <span className="text-green-600">FREE</span>
                       ) : (
-                        `₹${deliveryCharge}`
+                        formatPrice(deliveryCharge)
                       )}
                     </span>
                   </div>
                   {deliveryCharge > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Add ₹{300 - subtotal} more for free delivery
+                      Add {formatPrice(30000 - subtotal)} more for free delivery
                     </p>
                   )}
                 </div>
@@ -319,18 +321,20 @@ export default function CartPage() {
 
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span className="text-primary">₹{total.toFixed(0)}</span>
+                  <span className="text-primary">{formatPrice(total)}</span>
                 </div>
 
-                <Button className="w-full" size="lg">
-                  Proceed to Checkout
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link href="/checkout">
+                  <Button className="w-full" size="lg">
+                    Proceed to Checkout
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
 
                 {/* Trust Badges */}
                 <div className="flex justify-center gap-4 text-xs text-muted-foreground pt-2">
-                  <span>🔒 Secure Checkout</span>
-                  <span>🚚 Free Delivery</span>
+                  <span>Secure Checkout</span>
+                  <span>Free Delivery</span>
                 </div>
               </CardContent>
             </Card>

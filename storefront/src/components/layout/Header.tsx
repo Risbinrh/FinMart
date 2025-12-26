@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, MapPin, Menu, X, Fish } from 'lucide-react';
+import { Search, ShoppingCart, User, MapPin, Menu, Fish } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -16,7 +18,8 @@ const navigation = [
 ];
 
 export default function Header() {
-  const [cartCount] = useState(3);
+  const { itemCount } = useCart();
+  const { isAuthenticated, customer } = useAuth();
   const [location] = useState('Chennai, Tamil Nadu');
 
   return (
@@ -33,7 +36,7 @@ export default function Header() {
               </button>
             </div>
             <div className="hidden md:flex items-center gap-4 text-muted-foreground">
-              <Link href="/track-order" className="hover:text-primary">Track Order</Link>
+              <Link href="/orders" className="hover:text-primary">Track Order</Link>
               <Link href="/help" className="hover:text-primary">Help</Link>
             </div>
           </div>
@@ -87,9 +90,12 @@ export default function Header() {
             </Button>
 
             {/* User */}
-            <Link href="/login">
-              <Button variant="ghost" size="icon">
+            <Link href={isAuthenticated ? '/profile' : '/login'}>
+              <Button variant="ghost" size="icon" className="relative">
                 <User className="h-5 w-5" />
+                {isAuthenticated && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500" />
+                )}
               </Button>
             </Link>
 
@@ -97,9 +103,9 @@ export default function Header() {
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
+                {itemCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground">
-                    {cartCount}
+                    {itemCount > 99 ? '99+' : itemCount}
                   </Badge>
                 )}
               </Button>
@@ -134,9 +140,23 @@ export default function Header() {
                     ))}
                   </nav>
                   <div className="border-t pt-4">
-                    <Link href="/login">
-                      <Button className="w-full">Login / Register</Button>
-                    </Link>
+                    {isAuthenticated ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Welcome, {customer?.first_name || 'User'}!
+                        </p>
+                        <Link href="/profile">
+                          <Button variant="outline" className="w-full">My Account</Button>
+                        </Link>
+                        <Link href="/orders">
+                          <Button variant="outline" className="w-full">My Orders</Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      <Link href="/login">
+                        <Button className="w-full">Login / Register</Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </SheetContent>

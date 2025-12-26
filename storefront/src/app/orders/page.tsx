@@ -1,67 +1,67 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, ChevronRight, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Package, ChevronRight, Clock, CheckCircle, Truck, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-const orders = [
-  {
-    id: 'FC12345',
-    date: '2024-12-24',
-    status: 'delivered',
-    total: 1245,
-    items: [
-      { name: 'Seer Fish', quantity: '1 kg', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=100' },
-      { name: 'Tiger Prawns', quantity: '500g', image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=100' },
-    ],
-  },
-  {
-    id: 'FC12344',
-    date: '2024-12-22',
-    status: 'out-for-delivery',
-    total: 890,
-    items: [
-      { name: 'Pomfret White', quantity: '1 kg', image: 'https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=100' },
-    ],
-  },
-  {
-    id: 'FC12343',
-    date: '2024-12-20',
-    status: 'processing',
-    total: 650,
-    items: [
-      { name: 'Mackerel', quantity: '2 kg', image: 'https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?w=100' },
-      { name: 'Sardine', quantity: '1 kg', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=100' },
-    ],
-  },
-  {
-    id: 'FC12342',
-    date: '2024-12-18',
-    status: 'cancelled',
-    total: 450,
-    items: [
-      { name: 'Rohu', quantity: '1.5 kg', image: 'https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=100' },
-    ],
-  },
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/context/AuthContext';
+import { medusa, Order, formatPrice } from '@/lib/medusa';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  'processing': { label: 'Processing', color: 'bg-yellow-500', icon: Clock },
-  'out-for-delivery': { label: 'Out for Delivery', color: 'bg-blue-500', icon: Truck },
+  'pending': { label: 'Pending', color: 'bg-yellow-500', icon: Clock },
+  'processing': { label: 'Processing', color: 'bg-blue-500', icon: Loader2 },
+  'shipped': { label: 'Out for Delivery', color: 'bg-blue-500', icon: Truck },
   'delivered': { label: 'Delivered', color: 'bg-green-500', icon: CheckCircle },
+  'completed': { label: 'Delivered', color: 'bg-green-500', icon: CheckCircle },
   'cancelled': { label: 'Cancelled', color: 'bg-red-500', icon: XCircle },
+  'canceled': { label: 'Cancelled', color: 'bg-red-500', icon: XCircle },
 };
 
 export default function OrdersPage() {
-  const activeOrders = orders.filter(o => ['processing', 'out-for-delivery'].includes(o.status));
-  const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
+  const searchParams = useSearchParams();
+  const isSuccess = searchParams.get('success') === 'true';
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const OrderCard = ({ order }: { order: typeof orders[0] }) => {
-    const status = statusConfig[order.status];
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { orders } = await medusa.getOrders();
+        setOrders(orders || []);
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!authLoading) {
+      fetchOrders();
+    }
+  }, [isAuthenticated, authLoading]);
+
+  const activeOrders = orders.filter(o =>
+    ['pending', 'processing', 'shipped'].includes(o.status || o.fulfillment_status || '')
+  );
+  const pastOrders = orders.filter(o =>
+    ['delivered', 'completed', 'cancelled', 'canceled'].includes(o.status || o.fulfillment_status || '')
+  );
+
+  const OrderCard = ({ order }: { order: Order }) => {
+    const status = statusConfig[order.status || order.fulfillment_status || 'pending'] || statusConfig.pending;
     const StatusIcon = status.icon;
 
     return (
@@ -70,9 +70,9 @@ export default function OrdersPage() {
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="font-semibold">Order #{order.id}</p>
+                <p className="font-semibold">Order #{order.display_id || order.id.slice(0, 8)}</p>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(order.date).toLocaleDateString('en-IN', {
+                  {new Date(order.created_at).toLocaleDateString('en-IN', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',
@@ -87,22 +87,27 @@ export default function OrdersPage() {
 
             <div className="flex items-center gap-2 mb-3">
               <div className="flex -space-x-2">
-                {order.items.slice(0, 3).map((item, i) => (
+                {order.items?.slice(0, 3).map((item, i) => (
                   <div
                     key={i}
-                    className="relative h-10 w-10 rounded-full border-2 border-white overflow-hidden"
+                    className="relative h-10 w-10 rounded-full border-2 border-white overflow-hidden bg-muted"
                   >
-                    <Image src={item.image} alt={item.name} fill className="object-cover" />
+                    <Image
+                      src={item.thumbnail || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=100'}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 ))}
               </div>
               <span className="text-sm text-muted-foreground">
-                {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                {order.items?.length || 0} item{(order.items?.length || 0) > 1 ? 's' : ''}
               </span>
             </div>
 
             <div className="flex items-center justify-between">
-              <p className="font-bold text-primary">₹{order.total}</p>
+              <p className="font-bold text-primary">{formatPrice(order.total || 0)}</p>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
@@ -111,8 +116,48 @@ export default function OrdersPage() {
     );
   };
 
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="bg-primary/5 border-b">
+          <div className="container mx-auto px-4 py-6">
+            <Skeleton className="h-9 w-32 mb-2" />
+            <Skeleton className="h-5 w-48" />
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-10 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-24" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Success Message */}
+      {isSuccess && (
+        <div className="bg-green-50 border-b border-green-200">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center gap-2 text-green-700">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-medium">Order placed successfully! We&apos;ll deliver your fresh fish soon.</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-primary/5 border-b">
         <div className="container mx-auto px-4 py-6">
@@ -122,7 +167,18 @@ export default function OrdersPage() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        {orders.length === 0 ? (
+        {!isAuthenticated ? (
+          <div className="text-center py-12">
+            <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Please login to view your orders</h2>
+            <p className="text-muted-foreground mb-6">
+              Sign in to track your orders and order history
+            </p>
+            <Link href="/login">
+              <Button>Sign In</Button>
+            </Link>
+          </div>
+        ) : orders.length === 0 ? (
           <div className="text-center py-12">
             <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No orders yet</h2>

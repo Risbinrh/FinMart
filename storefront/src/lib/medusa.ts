@@ -2,6 +2,7 @@
 
 const MEDUSA_BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000';
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '';
+const REGION_ID = 'reg_01KD7TW42F9BX7SV1W1V0WTF5D'; // India region
 
 // Types
 export interface Product {
@@ -21,11 +22,18 @@ export interface Product {
   updated_at: string;
 }
 
+export interface CalculatedPrice {
+  calculated_amount: number;
+  original_amount: number;
+  currency_code: string;
+}
+
 export interface ProductVariant {
   id: string;
   title: string;
   sku: string | null;
-  prices: Price[];
+  prices?: Price[];
+  calculated_price?: CalculatedPrice;
   options: { id: string; value: string; option_id: string }[];
   inventory_quantity?: number;
   manage_inventory?: boolean;
@@ -171,18 +179,24 @@ class MedusaClient {
       ...options.headers,
     };
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: 'include',
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      // Log error but don't crash the app
+      console.error(`Medusa API Error [${endpoint}]:`, error);
+      throw error;
     }
-
-    return response.json();
   }
 
   // Products
@@ -193,74 +207,118 @@ class MedusaClient {
     q?: string;
     order?: string;
   }): Promise<{ products: Product[]; count: number }> {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.offset) searchParams.set('offset', params.offset.toString());
-    if (params?.category_id) {
-      params.category_id.forEach(id => searchParams.append('category_id[]', id));
-    }
-    if (params?.q) searchParams.set('q', params.q);
-    if (params?.order) searchParams.set('order', params.order);
+    try {
+      const searchParams = new URLSearchParams();
+      // Required for pricing
+      searchParams.set('region_id', REGION_ID);
+      searchParams.set('fields', '*variants.calculated_price');
 
-    const query = searchParams.toString();
-    return this.fetch(`/store/products${query ? `?${query}` : ''}`);
+      if (params?.limit) searchParams.set('limit', params.limit.toString());
+      if (params?.offset) searchParams.set('offset', params.offset.toString());
+      if (params?.category_id) {
+        params.category_id.forEach(id => searchParams.append('category_id[]', id));
+      }
+      if (params?.q) searchParams.set('q', params.q);
+      if (params?.order) searchParams.set('order', params.order);
+
+      const query = searchParams.toString();
+      return await this.fetch(`/store/products?${query}`);
+    } catch {
+      return { products: [], count: 0 };
+    }
   }
 
-  async getProduct(id: string): Promise<{ product: Product }> {
-    return this.fetch(`/store/products/${id}`);
+  async getProduct(id: string): Promise<{ product: Product } | null> {
+    try {
+      return await this.fetch(`/store/products/${id}?region_id=${REGION_ID}&fields=*variants.calculated_price`);
+    } catch {
+      return null;
+    }
   }
 
   async getProductByHandle(handle: string): Promise<{ products: Product[] }> {
-    return this.fetch(`/store/products?handle=${handle}`);
+    try {
+      return await this.fetch(`/store/products?handle=${handle}&region_id=${REGION_ID}&fields=*variants.calculated_price`);
+    } catch {
+      return { products: [] };
+    }
   }
 
   // Categories
   async getCategories(): Promise<{ product_categories: ProductCategory[] }> {
-    return this.fetch('/store/product-categories');
+    try {
+      return await this.fetch('/store/product-categories');
+    } catch {
+      return { product_categories: [] };
+    }
   }
 
-  async getCategory(id: string): Promise<{ product_category: ProductCategory }> {
-    return this.fetch(`/store/product-categories/${id}`);
+  async getCategory(id: string): Promise<{ product_category: ProductCategory } | null> {
+    try {
+      return await this.fetch(`/store/product-categories/${id}`);
+    } catch {
+      return null;
+    }
   }
 
   // Cart
-  async createCart(regionId?: string): Promise<{ cart: Cart }> {
-    return this.fetch('/store/carts', {
-      method: 'POST',
-      body: JSON.stringify({ region_id: regionId }),
-    });
+  async createCart(regionId: string = REGION_ID): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch('/store/carts', {
+        method: 'POST',
+        body: JSON.stringify({ region_id: regionId }),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async getCart(cartId: string): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}`);
+  async getCart(cartId: string): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}`);
+    } catch {
+      return null;
+    }
   }
 
   async addToCart(
     cartId: string,
     variantId: string,
     quantity: number
-  ): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}/line-items`, {
-      method: 'POST',
-      body: JSON.stringify({ variant_id: variantId, quantity }),
-    });
+  ): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}/line-items`, {
+        method: 'POST',
+        body: JSON.stringify({ variant_id: variantId, quantity }),
+      });
+    } catch {
+      return null;
+    }
   }
 
   async updateCartItem(
     cartId: string,
     lineItemId: string,
     quantity: number
-  ): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}`, {
-      method: 'POST',
-      body: JSON.stringify({ quantity }),
-    });
+  ): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}`, {
+        method: 'POST',
+        body: JSON.stringify({ quantity }),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async removeFromCart(cartId: string, lineItemId: string): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}`, {
-      method: 'DELETE',
-    });
+  async removeFromCart(cartId: string, lineItemId: string): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}`, {
+        method: 'DELETE',
+      });
+    } catch {
+      return null;
+    }
   }
 
   async updateCart(
@@ -270,53 +328,81 @@ class MedusaClient {
       shipping_address?: Partial<Address>;
       billing_address?: Partial<Address>;
     }
-  ): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  ): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return null;
+    }
   }
 
   async addShippingMethod(
     cartId: string,
     optionId: string
-  ): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}/shipping-methods`, {
-      method: 'POST',
-      body: JSON.stringify({ option_id: optionId }),
-    });
+  ): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}/shipping-methods`, {
+        method: 'POST',
+        body: JSON.stringify({ option_id: optionId }),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async createPaymentSessions(cartId: string): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}/payment-sessions`, {
-      method: 'POST',
-    });
+  async createPaymentSessions(cartId: string): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}/payment-sessions`, {
+        method: 'POST',
+      });
+    } catch {
+      return null;
+    }
   }
 
   async setPaymentSession(
     cartId: string,
     providerId: string
-  ): Promise<{ cart: Cart }> {
-    return this.fetch(`/store/carts/${cartId}/payment-session`, {
-      method: 'POST',
-      body: JSON.stringify({ provider_id: providerId }),
-    });
+  ): Promise<{ cart: Cart } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}/payment-session`, {
+        method: 'POST',
+        body: JSON.stringify({ provider_id: providerId }),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async completeCart(cartId: string): Promise<{ type: string; data: Order }> {
-    return this.fetch(`/store/carts/${cartId}/complete`, {
-      method: 'POST',
-    });
+  async completeCart(cartId: string): Promise<{ type: string; data: Order } | null> {
+    try {
+      return await this.fetch(`/store/carts/${cartId}/complete`, {
+        method: 'POST',
+      });
+    } catch {
+      return null;
+    }
   }
 
   // Regions
   async getRegions(): Promise<{ regions: Region[] }> {
-    return this.fetch('/store/regions');
+    try {
+      return await this.fetch('/store/regions');
+    } catch {
+      return { regions: [] };
+    }
   }
 
   // Shipping Options
   async getShippingOptions(cartId: string): Promise<{ shipping_options: ShippingMethod[] }> {
-    return this.fetch(`/store/shipping-options/${cartId}`);
+    try {
+      return await this.fetch(`/store/shipping-options/${cartId}`);
+    } catch {
+      return { shipping_options: [] };
+    }
   }
 
   // Customer / Auth
@@ -326,66 +412,107 @@ class MedusaClient {
     first_name: string;
     last_name: string;
     phone?: string;
-  }): Promise<{ customer: Customer }> {
-    return this.fetch('/store/customers', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  }): Promise<{ customer: Customer } | null> {
+    try {
+      return await this.fetch('/store/customers', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async login(email: string, password: string): Promise<{ customer: Customer }> {
-    return this.fetch('/store/auth/token', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+  async login(email: string, password: string): Promise<{ customer: Customer } | null> {
+    try {
+      return await this.fetch('/store/auth/token', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async getCustomer(): Promise<{ customer: Customer }> {
-    return this.fetch('/store/customers/me');
+  async getCustomer(): Promise<{ customer: Customer } | null> {
+    try {
+      return await this.fetch('/store/customers/me');
+    } catch {
+      return null;
+    }
   }
 
-  async updateCustomer(data: Partial<Customer>): Promise<{ customer: Customer }> {
-    return this.fetch('/store/customers/me', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  async updateCustomer(data: Partial<Customer>): Promise<{ customer: Customer } | null> {
+    try {
+      return await this.fetch('/store/customers/me', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async logout(): Promise<void> {
-    return this.fetch('/store/auth', { method: 'DELETE' });
+  async logout(): Promise<boolean> {
+    try {
+      await this.fetch('/store/auth', { method: 'DELETE' });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Orders
   async getOrders(): Promise<{ orders: Order[] }> {
-    return this.fetch('/store/customers/me/orders');
+    try {
+      return await this.fetch('/store/customers/me/orders');
+    } catch {
+      return { orders: [] };
+    }
   }
 
-  async getOrder(id: string): Promise<{ order: Order }> {
-    return this.fetch(`/store/orders/${id}`);
+  async getOrder(id: string): Promise<{ order: Order } | null> {
+    try {
+      return await this.fetch(`/store/orders/${id}`);
+    } catch {
+      return null;
+    }
   }
 
   // Addresses
-  async addAddress(address: Partial<Address>): Promise<{ customer: Customer }> {
-    return this.fetch('/store/customers/me/addresses', {
-      method: 'POST',
-      body: JSON.stringify({ address }),
-    });
+  async addAddress(address: Partial<Address>): Promise<{ customer: Customer } | null> {
+    try {
+      return await this.fetch('/store/customers/me/addresses', {
+        method: 'POST',
+        body: JSON.stringify({ address }),
+      });
+    } catch {
+      return null;
+    }
   }
 
   async updateAddress(
     addressId: string,
     address: Partial<Address>
-  ): Promise<{ customer: Customer }> {
-    return this.fetch(`/store/customers/me/addresses/${addressId}`, {
-      method: 'POST',
-      body: JSON.stringify(address),
-    });
+  ): Promise<{ customer: Customer } | null> {
+    try {
+      return await this.fetch(`/store/customers/me/addresses/${addressId}`, {
+        method: 'POST',
+        body: JSON.stringify(address),
+      });
+    } catch {
+      return null;
+    }
   }
 
-  async deleteAddress(addressId: string): Promise<{ customer: Customer }> {
-    return this.fetch(`/store/customers/me/addresses/${addressId}`, {
-      method: 'DELETE',
-    });
+  async deleteAddress(addressId: string): Promise<{ customer: Customer } | null> {
+    try {
+      return await this.fetch(`/store/customers/me/addresses/${addressId}`, {
+        method: 'DELETE',
+      });
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -401,8 +528,13 @@ export function formatPrice(amount: number, currencyCode: string = 'INR'): strin
   }).format(amount / 100); // Medusa stores amounts in smallest currency unit
 }
 
-// Helper to get variant price
+// Helper to get variant price (uses calculated_price from Medusa v2)
 export function getVariantPrice(variant: ProductVariant, currencyCode: string = 'inr'): number {
+  // First try calculated_price (Medusa v2)
+  if (variant.calculated_price) {
+    return variant.calculated_price.calculated_amount || 0;
+  }
+  // Fallback to prices array (Medusa v1 style)
   const price = variant.prices?.find(p => p.currency_code === currencyCode);
   return price?.amount || 0;
 }

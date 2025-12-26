@@ -1,45 +1,106 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, Grid3X3, LayoutList } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/product/ProductCard';
-import { products, categories } from '@/data/products';
+import { medusa, Product, ProductCategory } from '@/lib/medusa';
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get('category');
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  // Filter products
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.tamilName.includes(searchQuery);
-    const matchesCategory =
-      selectedCategory === 'all' || product.categorySlug === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { product_categories } = await medusa.getCategories();
+        setCategories(product_categories);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+
+        // Find category id from handle
+        let categoryIds: string[] | undefined;
+        if (selectedCategory !== 'all') {
+          const category = categories.find(c => c.handle === selectedCategory);
+          if (category) {
+            categoryIds = [category.id];
+          }
+        }
+
+        const { products } = await medusa.getProducts({
+          limit: 50,
+          q: searchQuery || undefined,
+          category_id: categoryIds,
+        });
+        setProducts(products);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [searchQuery, selectedCategory, categories]);
+
+  // Update selected category when URL param changes
+  useEffect(() => {
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [categoryParam]);
+
+  // Sort products client-side
+  const sortedProducts = [...products].sort((a, b) => {
+    const priceA = a.variants?.[0]?.prices?.[0]?.amount || 0;
+    const priceB = b.variants?.[0]?.prices?.[0]?.amount || 0;
+
     switch (sortBy) {
       case 'price-low':
-        return a.price - b.price;
+        return priceA - priceB;
       case 'price-high':
-        return b.price - a.price;
-      case 'rating':
-        return b.rating - a.rating;
+        return priceB - priceA;
+      case 'newest':
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       case 'popular':
       default:
-        return b.reviewCount - a.reviewCount;
+        return 0; // Keep original order
     }
   });
+
+  const ProductSkeleton = () => (
+    <div className="space-y-3">
+      <Skeleton className="aspect-[4/3] rounded-lg" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-3 w-1/2" />
+      <Skeleton className="h-6 w-1/3" />
+      <Skeleton className="h-9 w-full" />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,7 +109,7 @@ export default function ProductsPage() {
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Fresh Fish & Seafood</h1>
           <p className="text-muted-foreground">
-            {filteredProducts.length} products available
+            {isLoading ? 'Loading...' : `${products.length} products available`}
           </p>
         </div>
       </div>
@@ -77,7 +138,7 @@ export default function ProductsPage() {
               <SelectItem value="popular">Most Popular</SelectItem>
               <SelectItem value="price-low">Price: Low to High</SelectItem>
               <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="rating">Highest Rated</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
             </SelectContent>
           </Select>
 
@@ -106,14 +167,11 @@ export default function ProductsPage() {
                   {categories.map((cat) => (
                     <Button
                       key={cat.id}
-                      variant={selectedCategory === cat.slug ? 'default' : 'ghost'}
+                      variant={selectedCategory === cat.handle ? 'default' : 'ghost'}
                       className="justify-start"
-                      onClick={() => setSelectedCategory(cat.slug)}
+                      onClick={() => setSelectedCategory(cat.handle)}
                     >
                       {cat.name}
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {cat.productCount}
-                      </span>
                     </Button>
                   ))}
                 </div>
@@ -163,50 +221,16 @@ export default function ProductsPage() {
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => setSelectedCategory(cat.slug)}
+                      onClick={() => setSelectedCategory(cat.handle)}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex justify-between ${
-                        selectedCategory === cat.slug
+                        selectedCategory === cat.handle
                           ? 'bg-primary text-primary-foreground'
                           : 'hover:bg-muted'
                       }`}
                     >
                       <span>{cat.name}</span>
-                      <span className="opacity-60">{cat.productCount}</span>
                     </button>
                   ))}
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <h3 className="font-semibold mb-3">Price Range</h3>
-                <div className="space-y-2">
-                  {['Under ₹200', '₹200 - ₹500', '₹500 - ₹800', 'Above ₹800'].map(
-                    (range) => (
-                      <label
-                        key={range}
-                        className="flex items-center gap-2 text-sm cursor-pointer"
-                      >
-                        <input type="checkbox" className="rounded" />
-                        {range}
-                      </label>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* Availability */}
-              <div>
-                <h3 className="font-semibold mb-3">Availability</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="checkbox" className="rounded" defaultChecked />
-                    In Stock
-                  </label>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="checkbox" className="rounded" />
-                    Include Limited Stock
-                  </label>
                 </div>
               </div>
             </div>
@@ -219,7 +243,7 @@ export default function ProductsPage() {
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm text-muted-foreground">Active filters:</span>
                 <Badge variant="secondary" className="gap-1">
-                  {categories.find((c) => c.slug === selectedCategory)?.name}
+                  {categories.find((c) => c.handle === selectedCategory)?.name}
                   <button
                     onClick={() => setSelectedCategory('all')}
                     className="ml-1 hover:text-destructive"
@@ -230,7 +254,19 @@ export default function ProductsPage() {
               </div>
             )}
 
-            {sortedProducts.length > 0 ? (
+            {isLoading ? (
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4'
+                    : 'flex flex-col gap-4'
+                }
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <ProductSkeleton key={i} />
+                ))}
+              </div>
+            ) : sortedProducts.length > 0 ? (
               <div
                 className={
                   viewMode === 'grid'

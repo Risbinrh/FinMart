@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -16,24 +16,96 @@ import {
   Truck,
   Shield,
   RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { products } from '@/data/products';
+import { Skeleton } from '@/components/ui/skeleton';
+import { medusa, Product, ProductVariant, formatPrice, getVariantPrice } from '@/lib/medusa';
+import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/product/ProductCard';
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const product = products.find((p) => p.id === params.id);
+  const handle = params.id as string;
 
+  const { addToCart, isLoading: cartLoading } = useCart();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedCleaning, setSelectedCleaning] = useState(
-    product?.cleaningOptions[0]?.id || 'whole'
-  );
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setIsLoading(true);
+        const { products } = await medusa.getProductByHandle(handle);
+        if (products && products.length > 0) {
+          const prod = products[0];
+          setProduct(prod);
+          setSelectedVariant(prod.variants?.[0] || null);
+
+          // Fetch related products from same category
+          if (prod.categories && prod.categories.length > 0) {
+            const { products: related } = await medusa.getProducts({
+              category_id: [prod.categories[0].id],
+              limit: 5,
+            });
+            setRelatedProducts(related.filter(p => p.id !== prod.id).slice(0, 4));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch product:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [handle]);
+
+  const handleAddToCart = async () => {
+    if (!selectedVariant) return;
+
+    try {
+      setIsAdding(true);
+      await addToCart(selectedVariant.id, quantity);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="bg-muted/30 border-b">
+          <div className="container mx-auto px-4 py-3">
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            <Skeleton className="aspect-square rounded-lg" />
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-3/4" />
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -46,15 +118,36 @@ export default function ProductDetailPage() {
     );
   }
 
-  const selectedCleaningOption = product.cleaningOptions.find(
-    (opt) => opt.id === selectedCleaning
-  );
-  const totalPrice =
-    (product.price + (selectedCleaningOption?.extraPrice || 0)) * quantity;
+  // Get product data
+  const tamilName = product.subtitle || (product.metadata?.tamil_name as string) || '';
+  const freshness = (product.metadata?.freshness as string) || 'Caught fresh';
+  const rating = (product.metadata?.rating as number) || 4.5;
+  const reviewCount = (product.metadata?.review_count as number) || 0;
+  const bestFor = (product.metadata?.best_for as string[]) || ['Fry', 'Curry', 'Grill'];
+  const nutritionalInfo = (product.metadata?.nutritional_info as Record<string, string>) || {
+    calories: '100 kcal',
+    protein: '20g',
+    fat: '2g',
+    omega3: '0.5g',
+  };
 
-  const relatedProducts = products
-    .filter((p) => p.categorySlug === product.categorySlug && p.id !== product.id)
-    .slice(0, 4);
+  const images = product.images?.length > 0
+    ? product.images.map(img => img.url)
+    : [product.thumbnail || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=400&fit=crop'];
+
+  const currentPrice = selectedVariant ? getVariantPrice(selectedVariant) : 0;
+  const totalPrice = currentPrice * quantity;
+
+  // Group variants by option (e.g., weight and cleaning)
+  const weightOptions = [...new Set(product.variants?.map(v => {
+    const weightOpt = v.options?.find(o => o.option_id?.includes('weight') || v.title?.includes('g') || v.title?.includes('kg'));
+    return weightOpt?.value || v.title?.split(' / ')[0] || '';
+  }) || [])].filter(Boolean);
+
+  const cleaningOptions = [...new Set(product.variants?.map(v => {
+    const parts = v.title?.split(' / ') || [];
+    return parts[1] || '';
+  }) || [])].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +163,7 @@ export default function ProductDetailPage() {
               Products
             </Link>
             <span className="text-muted-foreground">/</span>
-            <span className="font-medium">{product.name}</span>
+            <span className="font-medium">{product.title}</span>
           </div>
         </div>
       </div>
@@ -88,22 +181,22 @@ export default function ProductDetailPage() {
             {/* Main Image */}
             <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
               <Image
-                src={product.images[selectedImage] || product.image}
-                alt={product.name}
+                src={images[selectedImage]}
+                alt={product.title}
                 fill
                 className="object-cover"
               />
-              {product.originalPrice && (
+              {product.metadata?.original_price && currentPrice < (product.metadata.original_price as number) && (
                 <Badge variant="destructive" className="absolute top-4 left-4">
-                  {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                  {Math.round((1 - currentPrice / (product.metadata.original_price as number)) * 100)}% OFF
                 </Badge>
               )}
             </div>
 
             {/* Thumbnail Images */}
-            {product.images.length > 1 && (
+            {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {product.images.map((img, index) => (
+                {images.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
@@ -115,7 +208,7 @@ export default function ProductDetailPage() {
                   >
                     <Image
                       src={img}
-                      alt={`${product.name} ${index + 1}`}
+                      alt={`${product.title} ${index + 1}`}
                       fill
                       className="object-cover"
                     />
@@ -131,8 +224,8 @@ export default function ProductDetailPage() {
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold">{product.name}</h1>
-                  <p className="text-lg text-muted-foreground">{product.tamilName}</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold">{product.title}</h1>
+                  <p className="text-lg text-muted-foreground">{tamilName}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="icon">
@@ -147,79 +240,76 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-4 mt-3">
                 <div className="flex items-center gap-1">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{product.rating}</span>
+                  <span className="font-semibold">{rating}</span>
                   <span className="text-muted-foreground">
-                    ({product.reviewCount} reviews)
+                    ({reviewCount} reviews)
                   </span>
                 </div>
                 <Separator orientation="vertical" className="h-5" />
                 <div className="flex items-center gap-1 text-sm">
                   <Clock className="h-4 w-4 text-green-600" />
-                  <span className="text-green-600 font-medium">{product.freshness}</span>
+                  <span className="text-green-600 font-medium">{freshness}</span>
                 </div>
               </div>
             </div>
 
             {/* Price */}
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-primary">₹{product.price}</span>
-              <span className="text-lg text-muted-foreground">/{product.unit}</span>
-              {product.originalPrice && (
+              <span className="text-3xl font-bold text-primary">{formatPrice(currentPrice)}</span>
+              {product.metadata?.original_price && currentPrice < (product.metadata.original_price as number) && (
                 <span className="text-lg text-muted-foreground line-through">
-                  ₹{product.originalPrice}
+                  {formatPrice(product.metadata.original_price as number)}
                 </span>
               )}
             </div>
 
-            {/* Cleaning Options */}
-            <div>
-              <h3 className="font-semibold mb-3">Select Cleaning Option</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {product.cleaningOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setSelectedCleaning(option.id)}
-                    className={`p-3 rounded-lg border-2 text-center transition-colors ${
-                      selectedCleaning === option.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <p className="font-medium text-sm">{option.name}</p>
-                    <p className="text-xs text-muted-foreground">{option.tamilName}</p>
-                    {option.extraPrice > 0 && (
-                      <p className="text-xs text-primary mt-1">+₹{option.extraPrice}</p>
-                    )}
-                  </button>
-                ))}
+            {/* Variant Selection */}
+            {product.variants && product.variants.length > 1 && (
+              <div>
+                <h3 className="font-semibold mb-3">Select Variant</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {product.variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      onClick={() => setSelectedVariant(variant)}
+                      className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                        selectedVariant?.id === variant.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <p className="font-medium text-sm">{variant.title}</p>
+                      <p className="text-xs text-primary mt-1">
+                        {formatPrice(getVariantPrice(variant))}
+                      </p>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quantity */}
             <div>
-              <h3 className="font-semibold mb-3">Quantity ({product.unit})</h3>
+              <h3 className="font-semibold mb-3">Quantity</h3>
               <div className="flex items-center gap-4">
                 <div className="flex items-center border rounded-lg">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setQuantity(Math.max(0.5, quantity - 0.5))}
-                    disabled={quantity <= 0.5}
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="w-16 text-center font-semibold">{quantity} {product.unit}</span>
+                  <span className="w-16 text-center font-semibold">{quantity}</span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setQuantity(quantity + 0.5)}
+                    onClick={() => setQuantity(quantity + 1)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  Min: 500g
-                </span>
               </div>
             </div>
 
@@ -227,16 +317,32 @@ export default function ProductDetailPage() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Total Price</p>
-                <p className="text-2xl font-bold text-primary">₹{totalPrice}</p>
+                <p className="text-2xl font-bold text-primary">{formatPrice(totalPrice)}</p>
               </div>
               <div className="flex gap-2">
-                <Button size="lg" className="flex-1 sm:flex-none gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  Add to Cart
+                <Button
+                  size="lg"
+                  className="flex-1 sm:flex-none gap-2"
+                  onClick={handleAddToCart}
+                  disabled={isAdding || cartLoading || !selectedVariant}
+                >
+                  {isAdding ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-5 w-5" />
+                      Add to Cart
+                    </>
+                  )}
                 </Button>
-                <Button size="lg" variant="secondary">
-                  Buy Now
-                </Button>
+                <Link href="/checkout">
+                  <Button size="lg" variant="secondary">
+                    Buy Now
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -277,7 +383,7 @@ export default function ProductDetailPage() {
                   <div className="mt-4">
                     <h4 className="font-semibold mb-2">Best Cooking Methods:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {product.bestFor.map((method) => (
+                      {bestFor.map((method) => (
                         <Badge key={method} variant="secondary">
                           {method}
                         </Badge>
@@ -295,25 +401,25 @@ export default function ProductDetailPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <p className="text-2xl font-bold text-primary">
-                        {product.nutritionalInfo.calories}
+                        {nutritionalInfo.calories}
                       </p>
                       <p className="text-sm text-muted-foreground">Calories</p>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <p className="text-2xl font-bold text-primary">
-                        {product.nutritionalInfo.protein}
+                        {nutritionalInfo.protein}
                       </p>
                       <p className="text-sm text-muted-foreground">Protein</p>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <p className="text-2xl font-bold text-primary">
-                        {product.nutritionalInfo.fat}
+                        {nutritionalInfo.fat}
                       </p>
                       <p className="text-sm text-muted-foreground">Fat</p>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <p className="text-2xl font-bold text-primary">
-                        {product.nutritionalInfo.omega3}
+                        {nutritionalInfo.omega3}
                       </p>
                       <p className="text-sm text-muted-foreground">Omega-3</p>
                     </div>
@@ -327,13 +433,13 @@ export default function ProductDetailPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="text-center">
-                      <p className="text-4xl font-bold text-primary">{product.rating}</p>
+                      <p className="text-4xl font-bold text-primary">{rating}</p>
                       <div className="flex gap-0.5 justify-center my-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
                             className={`h-4 w-4 ${
-                              star <= Math.round(product.rating)
+                              star <= Math.round(rating)
                                 ? 'fill-yellow-400 text-yellow-400'
                                 : 'text-gray-300'
                             }`}
@@ -341,7 +447,7 @@ export default function ProductDetailPage() {
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {product.reviewCount} reviews
+                        {reviewCount} reviews
                       </p>
                     </div>
                   </div>
