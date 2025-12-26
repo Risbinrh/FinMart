@@ -1,9 +1,5 @@
 // Medusa API Client for FreshCatch Storefront
 
-// Use proxy in browser (avoids CORS), direct URL on server
-const MEDUSA_BACKEND_URL = typeof window !== 'undefined'
-  ? '' // Use Next.js proxy in browser (relative URL)
-  : (process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000');
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '';
 const REGION_ID = 'reg_01KD7TW42F9BX7SV1W1V0WTF5D'; // India region
 
@@ -164,12 +160,18 @@ export interface Order {
 
 // API Client class
 class MedusaClient {
-  private baseUrl: string;
   private publishableKey: string;
 
   constructor() {
-    this.baseUrl = MEDUSA_BACKEND_URL;
     this.publishableKey = PUBLISHABLE_API_KEY;
+  }
+
+  // Get base URL dynamically (empty for browser proxy, full URL for server)
+  private getBaseUrl(): string {
+    if (typeof window !== 'undefined') {
+      return ''; // Use Next.js proxy in browser
+    }
+    return process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000';
   }
 
   private async fetch<T>(
@@ -182,8 +184,10 @@ class MedusaClient {
       ...options.headers,
     };
 
+    const baseUrl = this.getBaseUrl();
+
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(`${baseUrl}${endpoint}`, {
         ...options,
         headers,
         credentials: 'include',
