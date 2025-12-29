@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { medusa, formatPrice } from '@/lib/medusa';
+import { useRazorpay } from '@/hooks/useRazorpay';
 
 const deliverySlots = [
   { id: 'sunrise', name: 'Sunrise Delivery', time: '6 AM - 8 AM', price: 0, icon: '🌅' },
@@ -39,12 +40,14 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, refreshCart } = useCart();
   const { customer, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { processPayment, isLoading: paymentLoading } = useRazorpay();
 
   const [step, setStep] = useState<'checkout' | 'processing' | 'success'>('checkout');
   const [selectedSlot, setSelectedSlot] = useState('morning');
   const [selectedPayment, setSelectedPayment] = useState('cod');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [paymentId, setPaymentId] = useState('');
   const [address, setAddress] = useState({
     first_name: '',
     last_name: '',
@@ -130,14 +133,34 @@ export default function CheckoutPage() {
   const taxAmount = Math.round(subtotal * 0.05); // 5% GST
   const total = subtotal + deliveryCharge + taxAmount;
 
-  const handlePlaceOrder = async () => {
+  const validateForm = () => {
     if (!address.first_name || !address.phone || !address.address_1 || !address.postal_code) {
       alert('Please fill in all required fields');
-      return;
+      return false;
+    }
+    return true;
+  };
+
+  const completeOrder = async (razorpayPaymentId?: string) => {
+    // Generate order ID
+    const newOrderId = 'FC' + Date.now().toString().slice(-8);
+    setOrderId(newOrderId);
+    if (razorpayPaymentId) {
+      setPaymentId(razorpayPaymentId);
     }
 
+    // Clear the cart
+    localStorage.removeItem('freshcatch_cart_id');
+    await refreshCart();
+
+    // Show success
+    setStep('success');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!validateForm()) return;
+
     setIsProcessing(true);
-    setStep('processing');
 
     try {
       // Update cart with shipping address
@@ -149,19 +172,33 @@ export default function CheckoutPage() {
         });
       }
 
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Handle different payment methods
+      if (selectedPayment === 'cod') {
+        // Cash on Delivery - direct order
+        setStep('processing');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await completeOrder();
+      } else {
+        // Online Payment (UPI/Card) - Razorpay
+        setStep('processing');
 
-      // Generate order ID
-      const newOrderId = 'FC' + Date.now().toString().slice(-8);
-      setOrderId(newOrderId);
+        const result = await processPayment({
+          amount: total,
+          cartId: cart?.id,
+          customerName: `${address.first_name} ${address.last_name}`,
+          customerEmail: customer?.email,
+          customerPhone: address.phone,
+          description: `FreshCatch Order - ${cart?.items.length} items`,
+        });
 
-      // Clear the cart
-      localStorage.removeItem('freshcatch_cart_id');
-      await refreshCart();
-
-      // Show success
-      setStep('success');
+        if (result.success && result.razorpay_payment_id) {
+          await completeOrder(result.razorpay_payment_id);
+        } else {
+          // Payment failed or cancelled
+          alert(result.error || 'Payment failed. Please try again.');
+          setStep('checkout');
+        }
+      }
     } catch (error) {
       console.error('Failed to place order:', error);
       alert('Failed to place order. Please try again.');
@@ -252,6 +289,11 @@ export default function CheckoutPage() {
                         {paymentMethods.find(p => p.id === selectedPayment)?.name}
                         {selectedPayment !== 'cod' && ' - Paid'}
                       </p>
+                      {paymentId && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Txn ID: {paymentId}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -531,18 +573,20 @@ export default function CheckoutPage() {
                 </div>
 
                 <Button
-                  className="w-full"
+                  className={`w-full ${selectedPayment === 'cod' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}
                   size="lg"
                   onClick={handlePlaceOrder}
-                  disabled={isProcessing}
+                  disabled={isProcessing || paymentLoading}
                 >
-                  {isProcessing ? (
+                  {isProcessing || paymentLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Processing...
                     </>
+                  ) : selectedPayment === 'cod' ? (
+                    `Place Order (COD) - ${formatPrice(total)}`
                   ) : (
-                    `Place Order - ${formatPrice(total)}`
+                    `Pay ${formatPrice(total)} with ${selectedPayment === 'upi' ? 'UPI' : 'Card'}`
                   )}
                 </Button>
 
