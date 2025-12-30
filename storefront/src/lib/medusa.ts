@@ -137,6 +137,7 @@ export interface Customer {
   phone: string | null;
   billing_address?: Address | null;
   shipping_addresses?: Address[];
+  addresses?: Address[]; // Medusa v2 format
   has_account?: boolean;
   created_at?: string;
   metadata?: Record<string, unknown> | null;
@@ -531,7 +532,8 @@ class MedusaClient {
 
   async getCustomer(): Promise<{ customer: Customer } | null> {
     try {
-      return await this.fetch('/store/customers/me');
+      // Include addresses in the response
+      return await this.fetch('/store/customers/me?fields=*addresses');
     } catch {
       return null;
     }
@@ -586,12 +588,12 @@ class MedusaClient {
     }
   }
 
-  // Addresses
+  // Addresses - Medusa v2 format (pass address fields directly)
   async addAddress(address: Partial<Address>): Promise<{ customer: Customer } | null> {
     try {
       return await this.fetch('/store/customers/me/addresses', {
         method: 'POST',
-        body: JSON.stringify({ address }),
+        body: JSON.stringify(address),
       });
     } catch {
       return null;

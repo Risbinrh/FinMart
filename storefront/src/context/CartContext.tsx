@@ -166,8 +166,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { cart: updatedCart } = await medusa.updateCartItem(cart.id, lineItemId, quantity);
-      setCart(updatedCart);
+      const result = await medusa.updateCartItem(cart.id, lineItemId, quantity);
+      if (result?.cart) {
+        setCart(result.cart);
+      }
     } catch (err) {
       console.error('Failed to update quantity:', err);
       setError('Failed to update item quantity');
@@ -184,8 +186,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
 
-      const { cart: updatedCart } = await medusa.removeFromCart(cart.id, lineItemId);
-      setCart(updatedCart);
+      const result = await medusa.removeFromCart(cart.id, lineItemId);
+      if (result?.cart) {
+        setCart(result.cart);
+      }
     } catch (err) {
       console.error('Failed to remove from cart:', err);
       setError('Failed to remove item from cart');

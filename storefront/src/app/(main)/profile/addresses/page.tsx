@@ -205,7 +205,7 @@ export default function AddressesPage() {
     );
   }
 
-  const addresses = customer?.shipping_addresses || [];
+  const addresses = customer?.addresses || customer?.shipping_addresses || [];
 
   return (
     <div className="min-h-screen bg-background pb-6">

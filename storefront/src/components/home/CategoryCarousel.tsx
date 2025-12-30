@@ -130,11 +130,11 @@ export default function CategoryCarousel() {
                   <h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors">
                     {category.name}
                   </h3>
-                  {category.metadata?.tamil_name && (
+                  {category.metadata?.tamil_name ? (
                     <p className="text-xs text-muted-foreground group-hover:text-secondary-foreground/70 transition-colors">
-                      {String(category.metadata.tamil_name || '')}
+                      {String(category.metadata.tamil_name)}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </Link>
