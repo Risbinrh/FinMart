@@ -35,9 +35,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (storedCartId) {
         try {
           // Try to fetch existing cart
-          const { cart: existingCart } = await medusa.getCart(storedCartId);
-          setCart(existingCart);
-          return existingCart;
+          const result = await medusa.getCart(storedCartId);
+          const existingCart = result?.cart;
+
+          // Check if cart is completed (has completed_at or no items after completion)
+          if (existingCart && !(existingCart as Cart & { completed_at?: string }).completed_at) {
+            setCart(existingCart);
+            return existingCart;
+          } else {
+            // Cart is completed or invalid, remove and create new
+            console.log('[Cart] Existing cart is completed, creating new one');
+            localStorage.removeItem(CART_ID_KEY);
+          }
         } catch {
           // Cart doesn't exist or expired, create new one
           localStorage.removeItem(CART_ID_KEY);
@@ -45,10 +54,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       // Create new cart
-      const { cart: newCart } = await medusa.createCart();
-      localStorage.setItem(CART_ID_KEY, newCart.id);
-      setCart(newCart);
-      return newCart;
+      const result = await medusa.createCart();
+      if (result?.cart) {
+        localStorage.setItem(CART_ID_KEY, result.cart.id);
+        setCart(result.cart);
+        return result.cart;
+      }
+      return null;
     } catch (err) {
       console.error('Failed to get/create cart:', err);
       setError('Failed to initialize cart');
@@ -66,11 +78,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const cartId = localStorage.getItem(CART_ID_KEY);
     if (cartId) {
       try {
-        const { cart: updatedCart } = await medusa.getCart(cartId);
-        setCart(updatedCart);
+        const result = await medusa.getCart(cartId);
+        const updatedCart = result?.cart;
+
+        // Check if cart is completed
+        if (updatedCart && !(updatedCart as Cart & { completed_at?: string }).completed_at) {
+          setCart(updatedCart);
+        } else {
+          // Cart is completed, create new one
+          console.log('[Cart] Refreshed cart is completed, creating new one');
+          localStorage.removeItem(CART_ID_KEY);
+          await getOrCreateCart();
+        }
       } catch {
+        localStorage.removeItem(CART_ID_KEY);
         await getOrCreateCart();
       }
+    } else {
+      await getOrCreateCart();
     }
   }, [getOrCreateCart]);
 
@@ -85,10 +110,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (!currentCart) throw new Error('Failed to create cart');
       }
 
-      const { cart: updatedCart } = await medusa.addToCart(currentCart.id, variantId, quantity);
-      setCart(updatedCart);
-    } catch (err) {
+      const result = await medusa.addToCart(currentCart.id, variantId, quantity);
+
+      // If cart was completed or invalid, create a new one and try again
+      if (!result || !result.cart) {
+        console.log('[Cart] Cart may be completed, creating new cart...');
+        localStorage.removeItem(CART_ID_KEY);
+        currentCart = await getOrCreateCart();
+        if (!currentCart) throw new Error('Failed to create cart');
+
+        const retryResult = await medusa.addToCart(currentCart.id, variantId, quantity);
+        if (retryResult?.cart) {
+          setCart(retryResult.cart);
+        } else {
+          throw new Error('Failed to add item after creating new cart');
+        }
+      } else {
+        setCart(result.cart);
+      }
+    } catch (err: unknown) {
       console.error('Failed to add to cart:', err);
+
+      // Check if error is due to completed cart
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('completed') || errorMessage.includes('400')) {
+        // Cart is completed, create a new one
+        console.log('[Cart] Cart is completed, creating new cart...');
+        localStorage.removeItem(CART_ID_KEY);
+        const newCart = await getOrCreateCart();
+        if (newCart) {
+          const result = await medusa.addToCart(newCart.id, variantId, quantity);
+          if (result?.cart) {
+            setCart(result.cart);
+            return;
+          }
+        }
+      }
+
       setError('Failed to add item to cart');
       throw err;
     } finally {
@@ -108,8 +166,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { cart: updatedCart } = await medusa.updateCartItem(cart.id, lineItemId, quantity);
-      setCart(updatedCart);
+      const result = await medusa.updateCartItem(cart.id, lineItemId, quantity);
+      if (result?.cart) {
+        setCart(result.cart);
+      }
     } catch (err) {
       console.error('Failed to update quantity:', err);
       setError('Failed to update item quantity');
@@ -126,8 +186,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
 
-      const { cart: updatedCart } = await medusa.removeFromCart(cart.id, lineItemId);
-      setCart(updatedCart);
+      const result = await medusa.removeFromCart(cart.id, lineItemId);
+      if (result?.cart) {
+        setCart(result.cart);
+      }
     } catch (err) {
       console.error('Failed to remove from cart:', err);
       setError('Failed to remove item from cart');

@@ -46,6 +46,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         credentials: 'include',
     });
 
+    // Handle non-JSON responses (like 404 HTML pages)
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        return NextResponse.json(
+            { message: `API returned ${response.status}`, type: 'error' },
+            { status: response.status }
+        );
+    }
+
     const data = await response.json();
     const nextResponse = NextResponse.json(data, { status: response.status });
     forwardCookies(response, nextResponse);
@@ -73,6 +82,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         credentials: 'include',
     });
 
+    // Handle non-JSON responses
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        return NextResponse.json(
+            { message: `API returned ${response.status}`, type: 'error' },
+            { status: response.status }
+        );
+    }
+
     const data = await response.json();
     const nextResponse = NextResponse.json(data, { status: response.status });
     forwardCookies(response, nextResponse);
@@ -90,6 +108,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         headers: buildHeaders(request),
         credentials: 'include',
     });
+
+    // Handle non-JSON responses
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        return NextResponse.json(
+            { message: `API returned ${response.status}`, type: 'error' },
+            { status: response.status }
+        );
+    }
 
     const data = await response.json();
     const nextResponse = NextResponse.json(data, { status: response.status });

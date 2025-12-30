@@ -228,10 +228,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
       const result = await medusa.addAddress(address);
-      if (!result || !result.customer) {
+      if (!result) {
         throw new Error('Failed to add address');
       }
-      setCustomer(result.customer);
+      // Refresh customer to get updated addresses
+      await refreshCustomer();
     } catch (err: unknown) {
       console.error('Add address failed:', err);
       const message = err instanceof Error ? err.message : 'Failed to add address';
@@ -240,17 +241,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshCustomer]);
 
   const updateAddress = useCallback(async (addressId: string, address: Partial<Address>) => {
     try {
       setIsLoading(true);
       setError(null);
       const result = await medusa.updateAddress(addressId, address);
-      if (!result || !result.customer) {
+      if (!result) {
         throw new Error('Failed to update address');
       }
-      setCustomer(result.customer);
+      // Refresh customer to get updated addresses
+      await refreshCustomer();
     } catch (err: unknown) {
       console.error('Update address failed:', err);
       const message = err instanceof Error ? err.message : 'Failed to update address';
@@ -259,17 +261,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshCustomer]);
 
   const deleteAddress = useCallback(async (addressId: string) => {
     try {
       setIsLoading(true);
       setError(null);
       const result = await medusa.deleteAddress(addressId);
-      if (!result || !result.customer) {
+      if (!result) {
         throw new Error('Failed to delete address');
       }
-      setCustomer(result.customer);
+      // Refresh customer to get updated addresses
+      await refreshCustomer();
     } catch (err: unknown) {
       console.error('Delete address failed:', err);
       const message = err instanceof Error ? err.message : 'Failed to delete address';
@@ -278,7 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshCustomer]);
 
   const clearError = useCallback(() => {
     setError(null);
