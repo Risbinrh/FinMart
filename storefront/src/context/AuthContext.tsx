@@ -32,8 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshCustomer = useCallback(async () => {
     try {
-      const { customer } = await medusa.getCustomer();
-      setCustomer(customer);
+      const result = await medusa.getCustomer();
+      if (result && result.customer) {
+        setCustomer(result.customer);
+        return;
+      }
+      throw new Error('No customer data');
     } catch {
       // Check for demo customer in localStorage
       if (typeof window !== 'undefined') {
@@ -100,11 +104,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      const { customer } = await medusa.login(email, password);
-      setCustomer(customer);
-    } catch (err: any) {
+      const result = await medusa.login(email, password);
+      if (!result || !result.customer) {
+        throw new Error('Invalid email or password');
+      }
+      setCustomer(result.customer);
+    } catch (err: unknown) {
       console.error('Login failed:', err);
-      setError(err.message || 'Invalid email or password');
+      const message = err instanceof Error ? err.message : 'Invalid email or password';
+      setError(message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -121,11 +129,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      const { customer } = await medusa.register(data);
-      setCustomer(customer);
-    } catch (err: any) {
+
+      // Step 1: Register auth identity (Medusa v2)
+      const authResponse = await fetch('/api/auth/customer/emailpass/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email.trim(),
+          password: data.password.trim(),
+        }),
+      });
+
+      const authData = await authResponse.json();
+
+      if (!authResponse.ok || !authData.token) {
+        // Provide user-friendly error messages
+        let errorMessage = authData.message || 'Registration failed';
+        if (authData.message?.includes('already exists')) {
+          errorMessage = 'An account with this email already exists. Please login instead.';
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Store token for subsequent requests
+      medusa.setAuthToken(authData.token);
+
+      // Step 2: Create customer profile
+      const customerResponse = await fetch('/api/store/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify({
+          email: data.email.trim(),
+          first_name: data.first_name.trim(),
+          last_name: data.last_name.trim(),
+          phone: data.phone || undefined,
+        }),
+      });
+
+      const customerData = await customerResponse.json();
+
+      if (!customerResponse.ok) {
+        throw new Error(customerData.message || 'Failed to create profile');
+      }
+
+      setCustomer(customerData.customer);
+    } catch (err: unknown) {
       console.error('Registration failed:', err);
-      setError(err.message || 'Registration failed. Please try again.');
+      const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      setError(message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -137,19 +191,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
       await medusa.logout();
-      setCustomer(null);
-      // Clear demo customer from localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(DEMO_CUSTOMER_KEY);
-      }
     } catch (err) {
       console.error('Logout failed:', err);
-      // Still clear customer on frontend even if backend fails
+    } finally {
+      // Always clear customer and tokens on frontend
       setCustomer(null);
+      medusa.setAuthToken(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem(DEMO_CUSTOMER_KEY);
       }
-    } finally {
       setIsLoading(false);
     }
   }, []);
@@ -158,11 +208,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      const { customer: updatedCustomer } = await medusa.updateCustomer(data);
-      setCustomer(updatedCustomer);
-    } catch (err: any) {
+      const result = await medusa.updateCustomer(data);
+      if (!result || !result.customer) {
+        throw new Error('Failed to update profile');
+      }
+      setCustomer(result.customer);
+    } catch (err: unknown) {
       console.error('Update profile failed:', err);
-      setError(err.message || 'Failed to update profile');
+      const message = err instanceof Error ? err.message : 'Failed to update profile';
+      setError(message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -173,11 +227,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      const { customer: updatedCustomer } = await medusa.addAddress(address);
-      setCustomer(updatedCustomer);
-    } catch (err: any) {
+      const result = await medusa.addAddress(address);
+      if (!result || !result.customer) {
+        throw new Error('Failed to add address');
+      }
+      setCustomer(result.customer);
+    } catch (err: unknown) {
       console.error('Add address failed:', err);
-      setError(err.message || 'Failed to add address');
+      const message = err instanceof Error ? err.message : 'Failed to add address';
+      setError(message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -188,11 +246,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      const { customer: updatedCustomer } = await medusa.updateAddress(addressId, address);
-      setCustomer(updatedCustomer);
-    } catch (err: any) {
+      const result = await medusa.updateAddress(addressId, address);
+      if (!result || !result.customer) {
+        throw new Error('Failed to update address');
+      }
+      setCustomer(result.customer);
+    } catch (err: unknown) {
       console.error('Update address failed:', err);
-      setError(err.message || 'Failed to update address');
+      const message = err instanceof Error ? err.message : 'Failed to update address';
+      setError(message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -203,11 +265,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      const { customer: updatedCustomer } = await medusa.deleteAddress(addressId);
-      setCustomer(updatedCustomer);
-    } catch (err: any) {
+      const result = await medusa.deleteAddress(addressId);
+      if (!result || !result.customer) {
+        throw new Error('Failed to delete address');
+      }
+      setCustomer(result.customer);
+    } catch (err: unknown) {
       console.error('Delete address failed:', err);
-      setError(err.message || 'Failed to delete address');
+      const message = err instanceof Error ? err.message : 'Failed to delete address';
+      setError(message);
       throw err;
     } finally {
       setIsLoading(false);

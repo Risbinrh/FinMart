@@ -133,6 +133,10 @@ ADMIN_CORS=http://localhost:9000
 AUTH_CORS=http://localhost:9000
 JWT_SECRET=supersecret
 COOKIE_SECRET=supersecret
+
+# Razorpay Payment Gateway (get keys from https://dashboard.razorpay.com/app/keys)
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
 ```
 
 ### Frontend (.env.local in storefront/)
@@ -156,7 +160,11 @@ my-medusa-store/src/api/
     ├── zones/
     │   ├── route.ts             # GET /store/zones
     │   └── check/route.ts       # POST /store/zones/check
-    └── delivery-slots/route.ts  # GET /store/delivery-slots
+    ├── delivery-slots/route.ts  # GET /store/delivery-slots
+    └── payments/
+        └── razorpay/
+            ├── create-order/route.ts  # POST - Create Razorpay order
+            └── verify/route.ts        # POST - Verify payment signature
 ```
 
 Each route exports HTTP method handlers (GET, POST, DELETE, etc.) that receive `MedusaRequest` and `MedusaResponse`.

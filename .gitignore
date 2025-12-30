@@ -44,3 +44,8 @@ coverage/
 # Misc
 *.tgz
 .yarn/
+
+# Database dumps
+*.backup
+*.dump
+*.sql
