@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { medusa, ProductCategory } from '@/lib/medusa';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,35 +9,56 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function CategoryCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [categoryImages, setCategoryImages] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
         const { product_categories } = await medusa.getCategories();
         setCategories(product_categories);
+
+        // Fetch one product for each category to get its image
+        const imageMap: Record<string, string> = {};
+
+        // Process categories in parallel
+        await Promise.all(
+          product_categories.map(async (category) => {
+            try {
+              // Get products for this category, limiting to 1
+              const { products } = await medusa.getProducts({
+                category_id: [category.id],
+                limit: 1,
+              });
+
+              if (products.length > 0 && products[0].thumbnail) {
+                imageMap[category.handle] = products[0].thumbnail;
+              }
+            } catch (err) {
+              console.error(`Failed to fetch product for category ${category.handle}`, err);
+            }
+          })
+        );
+
+        setCategoryImages(imageMap);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchCategories();
+    fetchData();
   }, []);
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = 200;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  // Default category images by handle
   const getCategoryImage = (handle: string) => {
-    const images: Record<string, string> = {
+    // Return fetched product image, or fallback to the previous default image mapping for specific handles, 
+    // or a generic fallback if nothing else matches.
+    if (categoryImages[handle]) {
+      return categoryImages[handle];
+    }
+
+    // Fallback dictionary for immediate display if product fetch fails or is slow
+    const defaultImages: Record<string, string> = {
       'sea-fish-premium': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop',
       'sea-fish-regular': 'https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=200&h=200&fit=crop',
       'prawns': 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=200&h=200&fit=crop',
@@ -47,7 +67,8 @@ export default function CategoryCarousel() {
       'river-fish': 'https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=200&h=200&fit=crop',
       'dried-fish': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&h=200&fit=crop',
     };
-    return images[handle] || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop';
+
+    return defaultImages[handle] || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop';
   };
 
   if (isLoading) {
@@ -74,53 +95,44 @@ export default function CategoryCarousel() {
   if (categories.length === 0) return null;
 
   return (
-    <section className="py-8 bg-white">
+    <section className="py-12 bg-white">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold">Shop by Category</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => scroll('left')}
-              className="h-8 w-8 rounded-full border flex items-center justify-center hover:bg-muted transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              className="h-8 w-8 rounded-full border flex items-center justify-center hover:bg-muted transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gradient mb-1">Shop by Category</h2>
+            <p className="text-sm text-muted-foreground">Fresh catch from every category</p>
           </div>
+
         </div>
 
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4 justify-items-center"
         >
           {categories.map((category) => (
             <Link
               key={category.id}
               href={`/products?category=${category.handle}`}
-              className="flex-shrink-0 snap-start"
+              className="group block"
             >
-              <div className="w-28 sm:w-36 group">
-                <div className="relative aspect-square rounded-full overflow-hidden mb-3 border-2 border-transparent group-hover:border-primary transition-colors">
+              <div className="w-32 sm:w-40 group cursor-pointer">
+                <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-2">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <Image
                     src={getCategoryImage(category.handle)}
                     alt={category.name}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="object-contain transition-transform duration-500 group-hover:scale-105"
                   />
+                  <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl group-hover:ring-primary/20 transition-colors" />
                 </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                <div className="text-center space-y-1">
+                  <h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors">
                     {category.name}
                   </h3>
                   {category.metadata?.tamil_name && (
-                    <p className="text-xs text-muted-foreground">
-                      {category.metadata.tamil_name as string}
+                    <p className="text-xs text-muted-foreground group-hover:text-secondary-foreground/70 transition-colors">
+                      {String(category.metadata.tamil_name || '')}
                     </p>
                   )}
                 </div>

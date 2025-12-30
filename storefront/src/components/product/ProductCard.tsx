@@ -55,12 +55,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
       <Link href={`/products/${product.handle}`}>
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
           <Image
             src={product.thumbnail || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop'}
             alt={product.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
           />
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
@@ -77,9 +77,8 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
           {/* Availability indicator */}
           <div className="absolute top-2 right-2">
-            <div className={`h-2.5 w-2.5 rounded-full ${
-              !isInStock ? 'bg-red-500' : isLimited ? 'bg-yellow-500' : 'bg-green-500'
-            }`} />
+            <div className={`h-2.5 w-2.5 rounded-full ${!isInStock ? 'bg-red-500' : isLimited ? 'bg-yellow-500' : 'bg-green-500'
+              }`} />
           </div>
         </div>
       </Link>

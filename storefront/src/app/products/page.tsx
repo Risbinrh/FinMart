@@ -210,11 +210,10 @@ export default function ProductsPage() {
                 <div className="space-y-1">
                   <button
                     onClick={() => setSelectedCategory('all')}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                      selectedCategory === 'all'
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${selectedCategory === 'all'
                         ? 'bg-primary text-primary-foreground'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                   >
                     All Categories
                   </button>
@@ -222,11 +221,10 @@ export default function ProductsPage() {
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.handle)}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex justify-between ${
-                        selectedCategory === cat.handle
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-muted'
-                      }`}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex justify-between ${selectedCategory === cat.handle
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-muted'
+                        }`}
                     >
                       <span>{cat.name}</span>
                     </button>

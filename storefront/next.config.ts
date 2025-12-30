@@ -15,17 +15,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
       },
+      {
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
+      },
     ],
   },
-  // Proxy to Medusa backend to avoid CORS issues
-  async rewrites() {
-    return [
-      {
-        source: '/store/:path*',
-        destination: 'http://localhost:9000/store/:path*',
-      },
-    ];
-  },
+  // Note: Using API route proxy (/api/store/[...path]) instead of rewrites
+  // to properly forward the x-publishable-api-key header
 };
 
 export default nextConfig;
