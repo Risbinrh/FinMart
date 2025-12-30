@@ -18,23 +18,41 @@ import {
   Copy,
   Check,
   Loader2,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
-import { medusa, Order } from '@/lib/medusa';
+import { medusa } from '@/lib/medusa';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { customer, isAuthenticated, isLoading, logout } = useAuth();
+  const { customer, isAuthenticated, isLoading, logout, updateProfile } = useAuth();
 
   const [copied, setCopied] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone: '',
+  });
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     const fetchOrderCount = async () => {
@@ -49,6 +67,44 @@ export default function ProfilePage() {
     };
     fetchOrderCount();
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (customer) {
+      setEditForm({
+        first_name: customer.first_name || '',
+        last_name: customer.last_name || '',
+        phone: customer.phone || '',
+      });
+    }
+  }, [customer]);
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditForm({ ...editForm, [name]: value });
+    setEditError('');
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editForm.first_name.trim()) {
+      setEditError('First name is required');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateProfile({
+        first_name: editForm.first_name.trim(),
+        last_name: editForm.last_name.trim(),
+        phone: editForm.phone.trim() || undefined,
+      });
+      setShowEditDialog(false);
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      setEditError('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const referralCode = customer?.email?.split('@')[0]?.toUpperCase().slice(0, 8) + '50' || 'FRESH50';
 
@@ -139,7 +195,7 @@ export default function ProfilePage() {
               <p className="text-sm opacity-90">{customer?.phone || 'No phone added'}</p>
               <p className="text-sm opacity-80">{customer?.email}</p>
             </div>
-            <Button variant="secondary" size="sm" className="gap-1">
+            <Button variant="secondary" size="sm" className="gap-1" onClick={() => setShowEditDialog(true)}>
               <Edit className="h-3 w-3" />
               Edit
             </Button>
@@ -232,36 +288,49 @@ export default function ProfilePage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Saved Addresses</CardTitle>
-              <Button variant="ghost" size="sm">Add New</Button>
+              <Link href="/profile/addresses">
+                <Button variant="ghost" size="sm">Manage</Button>
+              </Link>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             {customer?.shipping_addresses && customer.shipping_addresses.length > 0 ? (
-              customer.shipping_addresses.map((addr, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                  <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">
-                        {addr.first_name} {addr.last_name}
-                      </span>
-                      {index === 0 && (
-                        <Badge variant="secondary" className="text-xs">Default</Badge>
-                      )}
+              customer.shipping_addresses.slice(0, 2).map((addr, index) => (
+                <Link key={addr.id || index} href="/profile/addresses">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">
+                          {addr.first_name} {addr.last_name}
+                        </span>
+                        {index === 0 && (
+                          <Badge variant="secondary" className="text-xs">Default</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{addr.address_1}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {addr.city} - {addr.postal_code}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{addr.address_1}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {addr.city} - {addr.postal_code}
-                    </p>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <Button variant="ghost" size="sm">Edit</Button>
-                </div>
+                </Link>
               ))
             ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">No saved addresses</p>
-                <Button variant="link" size="sm">Add your first address</Button>
-              </div>
+              <Link href="/profile/addresses">
+                <div className="text-center py-4 hover:bg-muted/50 rounded-lg transition-colors">
+                  <p className="text-sm text-muted-foreground">No saved addresses</p>
+                  <p className="text-sm text-primary font-medium">Add your first address</p>
+                </div>
+              </Link>
+            )}
+            {customer?.shipping_addresses && customer.shipping_addresses.length > 2 && (
+              <Link href="/profile/addresses">
+                <p className="text-sm text-primary text-center font-medium">
+                  View all {customer.shipping_addresses.length} addresses
+                </p>
+              </Link>
             )}
           </CardContent>
         </Card>
@@ -316,6 +385,96 @@ export default function ProfilePage() {
           )}
         </Button>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {editError && (
+              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                {editError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">First Name *</label>
+                <div className="relative mt-1">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    name="first_name"
+                    placeholder="Rajesh"
+                    value={editForm.first_name}
+                    onChange={handleEditChange}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Last Name</label>
+                <div className="relative mt-1">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    name="last_name"
+                    placeholder="Kumar"
+                    value={editForm.last_name}
+                    onChange={handleEditChange}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Email</label>
+              <div className="relative mt-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={customer?.email || ''}
+                  disabled
+                  className="pl-10 bg-muted"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Phone Number</label>
+              <div className="relative mt-1">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  name="phone"
+                  placeholder="9876543210"
+                  value={editForm.phone}
+                  onChange={handleEditChange}
+                  className="pl-10"
+                  maxLength={10}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -142,19 +142,42 @@ export default function CheckoutPage() {
   };
 
   const completeOrder = async (razorpayPaymentId?: string) => {
-    // Generate order ID
-    const newOrderId = 'FC' + Date.now().toString().slice(-8);
-    setOrderId(newOrderId);
-    if (razorpayPaymentId) {
-      setPaymentId(razorpayPaymentId);
+    try {
+      // Complete the cart to create a real order in Medusa
+      if (cart?.id) {
+        const result = await medusa.completeCart(cart.id);
+        if (result?.data) {
+          // Use the real order ID from Medusa
+          setOrderId(result.data.display_id?.toString() || result.data.id.slice(-8).toUpperCase());
+        } else {
+          // Fallback to generated ID if completion fails
+          setOrderId('FC' + Date.now().toString().slice(-8));
+        }
+      } else {
+        setOrderId('FC' + Date.now().toString().slice(-8));
+      }
+
+      if (razorpayPaymentId) {
+        setPaymentId(razorpayPaymentId);
+      }
+
+      // Clear the cart
+      localStorage.removeItem('freshcatch_cart_id');
+      await refreshCart();
+
+      // Show success
+      setStep('success');
+    } catch (error) {
+      console.error('Failed to complete order:', error);
+      // Still show success but with generated ID
+      setOrderId('FC' + Date.now().toString().slice(-8));
+      if (razorpayPaymentId) {
+        setPaymentId(razorpayPaymentId);
+      }
+      localStorage.removeItem('freshcatch_cart_id');
+      await refreshCart();
+      setStep('success');
     }
-
-    // Clear the cart
-    localStorage.removeItem('freshcatch_cart_id');
-    await refreshCart();
-
-    // Show success
-    setStep('success');
   };
 
   const handlePlaceOrder = async () => {
@@ -170,6 +193,37 @@ export default function CheckoutPage() {
           shipping_address: address,
           billing_address: address,
         });
+
+        // Get available shipping options and add one
+        try {
+          const { shipping_options } = await medusa.getShippingOptions(cart.id);
+          console.log('[Checkout] Shipping options:', shipping_options);
+          if (shipping_options && shipping_options.length > 0) {
+            await medusa.addShippingMethod(cart.id, shipping_options[0].id);
+          } else {
+            console.warn('[Checkout] No shipping options available - order may fail');
+          }
+        } catch (shippingError) {
+          console.warn('[Checkout] Failed to get shipping options:', shippingError);
+        }
+
+        // Medusa v2: Create payment collection and initialize payment session
+        try {
+          // Step 1: Create payment collection for the cart
+          const paymentCollection = await medusa.createPaymentCollection(cart.id);
+          console.log('[Checkout] Payment collection created:', paymentCollection);
+
+          if (paymentCollection?.payment_collection?.id) {
+            // Step 2: Initialize payment session with default provider
+            const paymentSession = await medusa.initializePaymentSession(
+              paymentCollection.payment_collection.id,
+              'pp_system_default'
+            );
+            console.log('[Checkout] Payment session initialized:', paymentSession);
+          }
+        } catch (paymentError) {
+          console.warn('[Checkout] Failed to set up payment:', paymentError);
+        }
       }
 
       // Handle different payment methods

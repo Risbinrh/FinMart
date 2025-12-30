@@ -14,13 +14,62 @@ import { useAuth } from '@/context/AuthContext';
 import { medusa, Order, formatPrice } from '@/lib/medusa';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  'pending': { label: 'Pending', color: 'bg-yellow-500', icon: Clock },
-  'processing': { label: 'Processing', color: 'bg-blue-500', icon: Loader2 },
-  'shipped': { label: 'Out for Delivery', color: 'bg-blue-500', icon: Truck },
+  'order_placed': { label: 'Order Placed', color: 'bg-yellow-500', icon: Clock },
+  'order_confirmed': { label: 'Order Confirmed', color: 'bg-blue-500', icon: CheckCircle },
+  'shipped': { label: 'Shipped', color: 'bg-blue-500', icon: Package },
+  'out_for_delivery': { label: 'Out for Delivery', color: 'bg-purple-500', icon: Truck },
   'delivered': { label: 'Delivered', color: 'bg-green-500', icon: CheckCircle },
-  'completed': { label: 'Delivered', color: 'bg-green-500', icon: CheckCircle },
   'cancelled': { label: 'Cancelled', color: 'bg-red-500', icon: XCircle },
-  'canceled': { label: 'Cancelled', color: 'bg-red-500', icon: XCircle },
+  'completed': { label: 'Completed', color: 'bg-green-500', icon: CheckCircle },
+};
+
+// Get the best status to display for an order
+// Flow: Order Placed → Order Confirmed → Shipped → Out for Delivery → Delivered
+const getOrderDisplayStatus = (order: Order): string => {
+  const paymentStatus = order.payment_status;
+  const fulfillmentStatus = order.fulfillment_status;
+  const orderStatus = order.status;
+
+  // Check for cancellation first
+  if (orderStatus === 'cancelled' || orderStatus === 'canceled') {
+    return 'cancelled';
+  }
+
+  // Check fulfillment status for delivery tracking
+  if (fulfillmentStatus === 'delivered' || orderStatus === 'completed') {
+    return 'delivered';
+  }
+
+  // Check if fulfillment has shipment (shipped_at indicates shipment created)
+  if (order.fulfillments && order.fulfillments.length > 0) {
+    const latestFulfillment = order.fulfillments[order.fulfillments.length - 1];
+
+    // If delivered
+    if (latestFulfillment.delivered_at) {
+      return 'delivered';
+    }
+
+    // If shipped (has shipped_at or shipment was created)
+    if (latestFulfillment.shipped_at) {
+      return 'out_for_delivery';
+    }
+
+    // Fulfillment created but not shipped yet
+    return 'shipped';
+  }
+
+  // Check if fulfillment exists (without detailed info)
+  if (fulfillmentStatus === 'fulfilled' || fulfillmentStatus === 'partially_fulfilled') {
+    return 'shipped';
+  }
+
+  // Check payment status - if captured, order is confirmed
+  if (paymentStatus === 'captured') {
+    return 'order_confirmed';
+  }
+
+  // Default - order just placed
+  return 'order_placed';
 };
 
 export default function OrdersPage() {
@@ -53,16 +102,28 @@ export default function OrdersPage() {
     }
   }, [isAuthenticated, authLoading]);
 
-  const activeOrders = orders.filter(o =>
-    ['pending', 'processing', 'shipped'].includes(o.status || o.fulfillment_status || '')
-  );
-  const pastOrders = orders.filter(o =>
-    ['delivered', 'completed', 'cancelled', 'canceled'].includes(o.status || o.fulfillment_status || '')
-  );
+  const activeOrders = orders.filter(o => {
+    const displayStatus = getOrderDisplayStatus(o);
+    return ['order_placed', 'order_confirmed', 'shipped', 'out_for_delivery'].includes(displayStatus);
+  });
+  const pastOrders = orders.filter(o => {
+    const displayStatus = getOrderDisplayStatus(o);
+    return ['delivered', 'completed', 'cancelled'].includes(displayStatus);
+  });
 
   const OrderCard = ({ order }: { order: Order }) => {
-    const status = statusConfig[order.status || order.fulfillment_status || 'pending'] || statusConfig.pending;
+    const displayStatus = getOrderDisplayStatus(order);
+    const status = statusConfig[displayStatus] || statusConfig.order_placed;
     const StatusIcon = status.icon;
+
+    // Log for debugging
+    console.log('[Orders] Order status:', {
+      id: order.id,
+      status: order.status,
+      fulfillment_status: order.fulfillment_status,
+      payment_status: order.payment_status,
+      displayStatus,
+    });
 
     return (
       <Link href={`/orders/${order.id}`}>

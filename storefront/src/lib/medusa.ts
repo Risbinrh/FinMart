@@ -158,6 +158,18 @@ export interface Order {
   tax_total: number;
   total: number;
   created_at: string;
+  // Additional Medusa v2 fields
+  fulfillments?: Array<{
+    id: string;
+    status: string;
+    shipped_at?: string;
+    delivered_at?: string;
+  }>;
+  payment_collections?: Array<{
+    id: string;
+    status: string;
+    captured_at?: string;
+  }>;
 }
 
 // API Client class
@@ -395,6 +407,33 @@ class MedusaClient {
     }
   }
 
+  // Medusa v2 Payment Collection methods
+  async createPaymentCollection(cartId: string): Promise<{ payment_collection: { id: string; payment_sessions: Array<{ id: string; provider_id: string }> } } | null> {
+    try {
+      return await this.fetch('/store/payment-collections', {
+        method: 'POST',
+        body: JSON.stringify({ cart_id: cartId }),
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  async initializePaymentSession(
+    paymentCollectionId: string,
+    providerId: string = 'pp_system_default'
+  ): Promise<{ payment_collection: { id: string; payment_sessions: Array<{ id: string; provider_id: string; status: string }> } } | null> {
+    try {
+      return await this.fetch(`/store/payment-collections/${paymentCollectionId}/payment-sessions`, {
+        method: 'POST',
+        body: JSON.stringify({ provider_id: providerId }),
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  // Legacy methods for backward compatibility
   async createPaymentSessions(cartId: string): Promise<{ cart: Cart } | null> {
     try {
       return await this.fetch(`/store/carts/${cartId}/payment-sessions`, {
@@ -441,7 +480,7 @@ class MedusaClient {
   // Shipping Options
   async getShippingOptions(cartId: string): Promise<{ shipping_options: ShippingMethod[] }> {
     try {
-      return await this.fetch(`/store/shipping-options/${cartId}`);
+      return await this.fetch(`/store/shipping-options?cart_id=${cartId}`);
     } catch {
       return { shipping_options: [] };
     }
@@ -521,7 +560,8 @@ class MedusaClient {
   // Orders
   async getOrders(): Promise<{ orders: Order[] }> {
     try {
-      return await this.fetch('/store/customers/me/orders');
+      // Include payment and fulfillment status fields
+      return await this.fetch('/store/orders?fields=*payment_collections,*fulfillments');
     } catch {
       return { orders: [] };
     }
@@ -529,7 +569,18 @@ class MedusaClient {
 
   async getOrder(id: string): Promise<{ order: Order } | null> {
     try {
-      return await this.fetch(`/store/orders/${id}`);
+      // Include payment and fulfillment details
+      return await this.fetch(`/store/orders/${id}?fields=*payment_collections,*fulfillments,*items`);
+    } catch {
+      return null;
+    }
+  }
+
+  async cancelOrder(id: string): Promise<{ order: Order } | null> {
+    try {
+      return await this.fetch(`/store/orders/${id}/cancel`, {
+        method: 'POST',
+      });
     } catch {
       return null;
     }
