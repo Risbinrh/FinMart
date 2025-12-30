@@ -131,9 +131,13 @@ export default function ProductDetailPage() {
     omega3: '0.5g',
   };
 
-  const images = product.images?.length > 0
-    ? product.images.map(img => img.url)
-    : [product.thumbnail || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=400&fit=crop'];
+  // Use thumbnail as primary image, fall back to images array only if no thumbnail
+  // This ensures we use the correct updated images (stored in thumbnail) rather than old placeholder images
+  const images = product.thumbnail
+    ? [product.thumbnail, ...(product.images?.filter(img => img.url !== product.thumbnail).map(img => img.url) || [])]
+    : product.images?.length > 0
+      ? product.images.map(img => img.url)
+      : ['https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=400&fit=crop'];
 
   const currentPrice = selectedVariant ? getVariantPrice(selectedVariant) : 0;
   const totalPrice = currentPrice * quantity;
@@ -179,12 +183,12 @@ export default function ProductDetailPage() {
           {/* Product Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+            <div className="relative aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
               <Image
                 src={images[selectedImage]}
                 alt={product.title}
                 fill
-                className="object-cover"
+                className="object-contain p-4"
               />
               {product.metadata?.original_price && currentPrice < (product.metadata.original_price as number) && (
                 <Badge variant="destructive" className="absolute top-4 left-4">
@@ -200,7 +204,7 @@ export default function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative h-20 w-20 rounded-md overflow-hidden shrink-0 border-2 transition-colors ${
+                    className={`relative h-20 w-20 rounded-md overflow-hidden shrink-0 border-2 transition-colors bg-slate-50 ${
                       selectedImage === index
                         ? 'border-primary'
                         : 'border-transparent'
@@ -210,7 +214,7 @@ export default function ProductDetailPage() {
                       src={img}
                       alt={`${product.title} ${index + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-contain p-1"
                     />
                   </button>
                 ))}

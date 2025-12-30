@@ -163,10 +163,15 @@ export interface Order {
 // API Client class
 class MedusaClient {
   private publishableKey: string;
+  private authToken: string | null = null;
 
   constructor() {
     this.publishableKey = PUBLISHABLE_API_KEY;
-    console.log('[DEBUG] Initializing MedusaClient with key:', this.publishableKey);
+    // Restore token from localStorage if available
+    if (typeof window !== 'undefined') {
+      this.authToken = localStorage.getItem('medusa_auth_token');
+    }
+    console.log('[DEBUG] Initializing MedusaClient');
   }
 
   // Get base URL dynamically
@@ -177,6 +182,23 @@ class MedusaClient {
     return process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000';
   }
 
+  // Set auth token
+  setAuthToken(token: string | null) {
+    this.authToken = token;
+    if (typeof window !== 'undefined') {
+      if (token) {
+        localStorage.setItem('medusa_auth_token', token);
+      } else {
+        localStorage.removeItem('medusa_auth_token');
+      }
+    }
+  }
+
+  // Get auth token
+  getAuthToken(): string | null {
+    return this.authToken;
+  }
+
   private async fetch<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -184,6 +206,7 @@ class MedusaClient {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...(this.publishableKey && { 'x-publishable-api-key': this.publishableKey }),
+      ...(this.authToken && { 'Authorization': `Bearer ${this.authToken}` }),
       ...options.headers,
     };
 
@@ -444,11 +467,25 @@ class MedusaClient {
 
   async login(email: string, password: string): Promise<{ customer: Customer } | null> {
     try {
-      return await this.fetch('/store/auth/token', {
+      // Medusa v2 auth endpoint - returns { token: "..." }
+      const authResponse = await this.fetch<{ token: string }>('/auth/customer/emailpass', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-    } catch {
+
+      console.log('[DEBUG] Auth login response:', authResponse);
+
+      if (authResponse.token) {
+        // Store the token for subsequent requests
+        this.setAuthToken(authResponse.token);
+        console.log('[DEBUG] Token stored successfully');
+      }
+
+      // After successful auth, get customer data
+      const customerResponse = await this.getCustomer();
+      return customerResponse;
+    } catch (error) {
+      console.error('[DEBUG] Login error:', error);
       return null;
     }
   }

@@ -9,13 +9,11 @@ function buildHeaders(request: NextRequest): HeadersInit {
         'x-publishable-api-key': PUBLISHABLE_API_KEY,
     };
 
-    // Forward cookies for authentication
     const cookie = request.headers.get('cookie');
     if (cookie) {
         headers['cookie'] = cookie;
     }
 
-    // Forward authorization header if present
     const authorization = request.headers.get('authorization');
     if (authorization) {
         headers['authorization'] = authorization;
@@ -31,14 +29,40 @@ function forwardCookies(medusaResponse: Response, nextResponse: NextResponse): v
     }
 }
 
+export async function POST(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+    const { path } = await params;
+    const url = `${MEDUSA_BACKEND_URL}/auth/${path.join('/')}`;
+
+    let body;
+    try {
+        body = await request.json();
+    } catch {
+        body = {};
+    }
+
+    console.log('[API Proxy] Auth POST:', url);
+    console.log('[API Proxy] Auth Body:', JSON.stringify(body));
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: buildHeaders(request),
+        body: JSON.stringify(body),
+        credentials: 'include',
+    });
+
+    const data = await response.json();
+    console.log('[API Proxy] Auth Response:', response.status, JSON.stringify(data));
+
+    const nextResponse = NextResponse.json(data, { status: response.status });
+    forwardCookies(response, nextResponse);
+    return nextResponse;
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
     const { path } = await params;
-    const searchParams = request.nextUrl.searchParams.toString();
-    const url = `${MEDUSA_BACKEND_URL}/store/${path.join('/')}${searchParams ? `?${searchParams}` : ''}`;
+    const url = `${MEDUSA_BACKEND_URL}/auth/${path.join('/')}`;
 
-    const auth = request.headers.get('authorization');
-    console.log('[API Proxy] GET:', url);
-    console.log('[API Proxy] Auth header received:', auth ? 'Yes (Bearer...)' : 'No');
+    console.log('[API Proxy] Auth GET:', url);
 
     const response = await fetch(url, {
         method: 'GET',
@@ -52,38 +76,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return nextResponse;
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
-    const { path } = await params;
-    const searchParams = request.nextUrl.searchParams.toString();
-    const url = `${MEDUSA_BACKEND_URL}/store/${path.join('/')}${searchParams ? `?${searchParams}` : ''}`;
-
-    console.log('[API Proxy] POST:', url);
-
-    let body;
-    try {
-        body = await request.json();
-    } catch {
-        body = {};
-    }
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: buildHeaders(request),
-        body: JSON.stringify(body),
-        credentials: 'include',
-    });
-
-    const data = await response.json();
-    const nextResponse = NextResponse.json(data, { status: response.status });
-    forwardCookies(response, nextResponse);
-    return nextResponse;
-}
-
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
     const { path } = await params;
-    const url = `${MEDUSA_BACKEND_URL}/store/${path.join('/')}`;
+    const url = `${MEDUSA_BACKEND_URL}/auth/${path.join('/')}`;
 
-    console.log('[API Proxy] DELETE:', url);
+    console.log('[API Proxy] Auth DELETE:', url);
 
     const response = await fetch(url, {
         method: 'DELETE',
