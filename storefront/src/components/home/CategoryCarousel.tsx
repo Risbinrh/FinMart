@@ -116,23 +116,25 @@ export default function CategoryCarousel() {
               className="group block"
             >
               <div className="w-32 sm:w-40 group cursor-pointer">
-                <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-2">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <Image
-                    src={getCategoryImage(category.handle)}
-                    alt={category.name}
-                    fill
-                    className="object-contain transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl group-hover:ring-primary/20 transition-colors" />
+                <div className="relative aspect-square rounded-full overflow-hidden mb-4 shadow-sm group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1 bg-white">
+                  <div className="absolute inset-0 p-3">
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={getCategoryImage(category.handle)}
+                        alt={category.name}
+                        fill
+                        className="object-contain transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="text-center space-y-1">
                   <h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors">
                     {category.name}
                   </h3>
-                  {category.metadata?.tamil_name && (
+                  {typeof category.metadata?.tamil_name === 'string' && (
                     <p className="text-xs text-muted-foreground group-hover:text-secondary-foreground/70 transition-colors">
-                      {String(category.metadata.tamil_name || '')}
+                      {category.metadata.tamil_name}
                     </p>
                   )}
                 </div>
