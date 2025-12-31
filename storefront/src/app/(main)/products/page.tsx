@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
-  Search,
-  SlidersHorizontal,
   Grid3X3,
   LayoutList,
   Fish,
@@ -17,7 +15,6 @@ import {
   Filter,
   Loader2
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,18 +27,25 @@ import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
 
 function ProductsContent() {
-
+  const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const searchQuery = searchParams.get('q') || '';
+
+  const clearSearch = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('q');
+    router.push(`/products${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { language } = useLanguage();
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // Fetch categories
   useEffect(() => {
@@ -58,6 +62,11 @@ function ProductsContent() {
 
   // Fetch products
   useEffect(() => {
+    // Wait for categories to load before filtering by category
+    if (selectedCategory !== 'all' && categories.length === 0) {
+      return; // Will re-run when categories load
+    }
+
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
@@ -73,8 +82,8 @@ function ProductsContent() {
 
         const { products } = await medusa.getProducts({
           limit: 50,
-          q: searchQuery || undefined,
           category_id: categoryIds,
+          q: searchQuery || undefined,
         });
         setProducts(products);
       } catch (error) {
@@ -84,7 +93,7 @@ function ProductsContent() {
       }
     };
     fetchProducts();
-  }, [searchQuery, selectedCategory, categories]);
+  }, [selectedCategory, categories, searchQuery]);
 
   // Update selected category when URL param changes
   useEffect(() => {
@@ -94,9 +103,21 @@ function ProductsContent() {
   }, [categoryParam]);
 
   // Sort products client-side
+  // Helper to get product price (supports both Medusa v1 and v2)
+  const getProductPrice = (product: Product): number => {
+    const variant = product.variants?.[0];
+    if (!variant) return 0;
+    // Medusa v2: calculated_price
+    if (variant.calculated_price?.calculated_amount) {
+      return variant.calculated_price.calculated_amount;
+    }
+    // Medusa v1 fallback: prices array
+    return variant.prices?.[0]?.amount || 0;
+  };
+
   const sortedProducts = [...products].sort((a, b) => {
-    const priceA = a.variants?.[0]?.prices?.[0]?.amount || 0;
-    const priceB = b.variants?.[0]?.prices?.[0]?.amount || 0;
+    const priceA = getProductPrice(a);
+    const priceB = getProductPrice(b);
 
     switch (sortBy) {
       case 'price-low':
@@ -125,13 +146,18 @@ function ProductsContent() {
     </div>
   );
 
+  const handleCategorySelect = (handle: string) => {
+    setSelectedCategory(handle);
+    setFilterOpen(false); // Close mobile filter sheet
+  };
+
   const CategoryButton = ({ category, isMobile = false }: { category: ProductCategory | null; isMobile?: boolean }) => {
     const isAll = category === null;
     const isSelected = isAll ? selectedCategory === 'all' : selectedCategory === category?.handle;
 
     return (
       <button
-        onClick={() => setSelectedCategory(isAll ? 'all' : category!.handle)}
+        onClick={() => handleCategorySelect(isAll ? 'all' : category!.handle)}
         className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between group ${isSelected
           ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-md'
           : 'hover:bg-primary/5 text-gray-700'
@@ -151,132 +177,12 @@ function ProductsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 text-white">
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2 mb-3">
-              <Fish className="h-6 w-6" />
-              <span className="text-primary-foreground/80 text-sm font-medium">{t('freshFromOcean', language)}</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              {t('freshFishSeafood', language)}
-            </h1>
-            <p className="text-primary-foreground/80 text-lg">
-              {t('discoverSelection', language)} {isLoading ? '...' : products.length}+ {t('premiumQuality', language)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Bar - Sticky */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={t('searchProductsPlaceholder', language)}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 text-base bg-gray-50 border-gray-200 focus:bg-white rounded-xl"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Sort Dropdown */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full sm:w-[200px] h-12 bg-gray-50 border-gray-200 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder={t('sortBy', language)} />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="popular">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    {t('mostPopular', language)}
-                  </div>
-                </SelectItem>
-                <SelectItem value="price-low">{t('priceLowToHigh', language)}</SelectItem>
-                <SelectItem value="price-high"> {t('priceHighToLow', language)}</SelectItem>
-                <SelectItem value="newest">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    {t('newestFirst', language)}
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Mobile Filter Button */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="sm:hidden h-12 gap-2 rounded-xl border-gray-200">
-                  <Filter className="h-4 w-4" />
-                  {t('filters', language)}
-                  {selectedCategory !== 'all' && (
-                    <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">1</Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px]">
-                <SheetHeader>
-                  <SheetTitle className="flex items-center gap-2">
-                    <Filter className="h-5 w-5" />
-                    {t('filters', language)}
-                  </SheetTitle>
-                </SheetHeader>
-                <Separator className="my-4" />
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-3">{t('categories', language)}</h3>
-                  <CategoryButton category={null} isMobile />
-                  {categories.map((cat) => (
-                    <CategoryButton key={cat.id} category={cat} isMobile />
-                  ))}
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            {/* View Mode Toggle - Desktop */}
-            <div className="hidden sm:flex items-center gap-1 bg-gray-100 rounded-xl p-1">
-              <Button
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                size="icon"
-                className={`h-10 w-10 rounded-lg ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                size="icon"
-                className={`h-10 w-10 rounded-lg ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
-                onClick={() => setViewMode('list')}
-              >
-                <LayoutList className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex gap-8">
           {/* Sidebar - Desktop */}
           <aside className="hidden lg:block w-72 shrink-0">
-            <div className="sticky top-32 space-y-6">
+            <div className="sticky top-24 space-y-6">
               {/* Categories Card */}
               <div className="bg-white rounded-2xl p-5 shadow-sm border">
                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
@@ -311,16 +217,46 @@ function ProductsContent() {
 
           {/* Product Grid */}
           <div className="flex-1 min-w-0">
-            {/* Active Filters & Results Count */}
+            {/* Toolbar: Filters, Sort, View Toggle */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <div className="flex items-center gap-3">
+              {/* Left: Results count & active filters */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Mobile Filter Button */}
+                <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="lg:hidden gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filters
+                      {selectedCategory !== 'all' && (
+                        <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-primary text-white">1</Badge>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px]">
+                    <SheetHeader>
+                      <SheetTitle className="flex items-center gap-2">
+                        <Filter className="h-5 w-5" />
+                        Filters
+                      </SheetTitle>
+                    </SheetHeader>
+                    <Separator className="my-4" />
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">Categories</h3>
+                      <CategoryButton category={null} isMobile />
+                      {categories.map((cat) => (
+                        <CategoryButton key={cat.id} category={cat} isMobile />
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+
                 <p className="text-sm text-muted-foreground">
                   {t('showing', language)} <span className="font-semibold text-foreground">{sortedProducts.length}</span> {t('productsText', language)}
                 </p>
                 {selectedCategory !== 'all' && (
                   <Badge
                     variant="secondary"
-                    className="gap-1.5 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer"
+                    className="gap-1.5 px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer text-xs"
                     onClick={() => setSelectedCategory('all')}
                   >
                     {language === 'ta' && categories.find((c) => c.handle === selectedCategory)?.metadata?.tamil_name
@@ -332,13 +268,62 @@ function ProductsContent() {
                 {searchQuery && (
                   <Badge
                     variant="secondary"
-                    className="gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer"
-                    onClick={() => setSearchQuery('')}
+                    className="gap-1.5 px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer text-xs"
+                    onClick={clearSearch}
                   >
                     "{searchQuery}"
                     <X className="h-3 w-3" />
                   </Badge>
                 )}
+              </div>
+
+              {/* Right: Sort & View Toggle */}
+              <div className="flex items-center gap-2">
+                {/* Sort Dropdown */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[140px] sm:w-[160px] h-9 text-sm">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <SelectValue placeholder="Sort" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popular">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Popular
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="price-low">Price: Low-High</SelectItem>
+                    <SelectItem value="price-high">Price: High-Low</SelectItem>
+                    <SelectItem value="newest">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Newest
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* View Mode Toggle */}
+                <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-7 w-7 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <Grid3X3 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-7 w-7 rounded ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                    onClick={() => setViewMode('list')}
+                  >
+                    <LayoutList className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -374,17 +359,16 @@ function ProductsContent() {
                 <h3 className="text-xl font-semibold mb-2">{t('noProductsFound', language)}</h3>
                 <p className="text-muted-foreground mb-6">
                   {t('adjustSearchFilter', language)}
+                  {/* Try selecting a different category */}
                 </p>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('all');
-                  }}
+                  onClick={() => setSelectedCategory('all')}
                   className="gap-2"
                 >
                   <X className="h-4 w-4" />
-                  {t('clearAllFilters', language)}
+                  {t('clearFilters', language)}
+                  {/* Clear filters */}
                 </Button>
               </div>
             )}
@@ -398,12 +382,7 @@ function ProductsContent() {
 export default function ProductsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
-        <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 text-white py-12">
-          <div className="container mx-auto px-4">
-            <div className="h-10 w-48 bg-white/20 rounded animate-pulse" />
-          </div>
-        </div>
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -5,34 +5,29 @@ import { Fish, Phone, Mail, MapPin, Facebook, Instagram, Twitter } from 'lucide-
 import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
 
+
+
 export default function Footer() {
   const { language } = useLanguage();
 
   const footerLinks = {
     shop: [
-      { name: t('allProducts', language), href: '/products' },
-      { name: t('seaFish', language), href: '/products?category=sea-fish' },
-      { name: t('riverFish', language), href: '/products?category=river-fish' },
-      { name: t('prawnsCrabs', language), href: '/products?category=prawns' },
-      { name: t('recipes', language), href: '/recipes' },
+      { name: 'All Products', href: '/products' },
+      { name: 'Sea Fish', href: '/products?category=sea-fish-premium' },
+      { name: 'Prawns', href: '/products?category=prawns' },
+      { name: 'Crabs', href: '/products?category=crabs' },
+      { name: 'River Fish', href: '/products?category=river-fish' },
+      { name: 'Recipes', href: '/recipes' },
     ],
-    support: [
-      { name: t('contactUs', language), href: '/contact' },
-      { name: t('faqs', language), href: '/faqs' },
-      { name: t('deliveryInfo', language), href: '/delivery' },
-      { name: t('trackOrder', language), href: '/track-order' },
-      { name: t('returns', language), href: '/returns' },
+    account: [
+      { name: 'My Account', href: '/profile' },
+      { name: 'My Orders', href: '/orders' },
+      { name: 'My Addresses', href: '/profile/addresses' },
+      { name: 'Cart', href: '/cart' },
     ],
-    company: [
-      { name: t('aboutUs', language), href: '/about' },
-      { name: t('ourStory', language), href: '/our-story' },
-      { name: t('careers', language), href: '/careers' },
-      { name: t('blog', language), href: '/blog' },
-    ],
-    legal: [
-      { name: t('privacyPolicy', language), href: '/privacy' },
-      { name: t('termsOfService', language), href: '/terms' },
-      { name: t('refundPolicy', language), href: '/refund' },
+    info: [
+      { name: 'Delivery Zones', href: '/zone-demo' },
+      { name: 'Track Order', href: '/orders' },
     ],
   };
   return (
@@ -84,11 +79,11 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Support Links */}
+          {/* Account Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4">{t('support', language)}</h3>
+            <h3 className="text-white font-semibold mb-4">My Account</h3>
             <ul className="space-y-2 text-sm">
-              {footerLinks.support.map((link) => (
+              {footerLinks.account.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-primary transition-colors">
                     {link.name}
@@ -98,11 +93,12 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Company Links */}
+          {/* Info Links */}
           <div>
             <h3 className="text-white font-semibold mb-4">{t('company', language)}</h3>
+            <h3 className="text-white font-semibold mb-4">Information</h3>
             <ul className="space-y-2 text-sm">
-              {footerLinks.company.map((link) => (
+              {footerLinks.info.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-primary transition-colors">
                     {link.name}
@@ -129,14 +125,8 @@ export default function Footer() {
       <div className="border-t border-slate-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-            <p>&copy; 2024 FreshCatch. {t('allRightsReserved', language)}</p>
-            <div className="flex gap-6">
-              {footerLinks.legal.map((link) => (
-                <Link key={link.name} href={link.href} className="hover:text-primary transition-colors">
-                  {link.name}
-                </Link>
-              ))}
-            </div>
+            <p>&copy; 2025 FreshCatch. All rights reserved.</p>
+            <p className="text-slate-500">Made with ❤️ in Chennai, Tamil Nadu</p>
           </div>
         </div>
       </div>
