@@ -4,28 +4,21 @@ import { Fish, Phone, Mail, MapPin, Facebook, Instagram, Twitter } from 'lucide-
 const footerLinks = {
   shop: [
     { name: 'All Products', href: '/products' },
-    { name: 'Sea Fish', href: '/products?category=sea-fish' },
+    { name: 'Sea Fish', href: '/products?category=sea-fish-premium' },
+    { name: 'Prawns', href: '/products?category=prawns' },
+    { name: 'Crabs', href: '/products?category=crabs' },
     { name: 'River Fish', href: '/products?category=river-fish' },
-    { name: 'Prawns & Crabs', href: '/products?category=prawns' },
     { name: 'Recipes', href: '/recipes' },
   ],
-  support: [
-    { name: 'Contact Us', href: '/contact' },
-    { name: 'FAQs', href: '/faqs' },
-    { name: 'Delivery Info', href: '/delivery' },
-    { name: 'Track Order', href: '/track-order' },
-    { name: 'Returns', href: '/returns' },
+  account: [
+    { name: 'My Account', href: '/profile' },
+    { name: 'My Orders', href: '/orders' },
+    { name: 'My Addresses', href: '/profile/addresses' },
+    { name: 'Cart', href: '/cart' },
   ],
-  company: [
-    { name: 'About Us', href: '/about' },
-    { name: 'Our Story', href: '/our-story' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'Blog', href: '/blog' },
-  ],
-  legal: [
-    { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'Terms of Service', href: '/terms' },
-    { name: 'Refund Policy', href: '/refund' },
+  info: [
+    { name: 'Delivery Zones', href: '/zone-demo' },
+    { name: 'Track Order', href: '/orders' },
   ],
 };
 
@@ -80,11 +73,11 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Support Links */}
+          {/* Account Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Support</h3>
+            <h3 className="text-white font-semibold mb-4">My Account</h3>
             <ul className="space-y-2 text-sm">
-              {footerLinks.support.map((link) => (
+              {footerLinks.account.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-primary transition-colors">
                     {link.name}
@@ -94,11 +87,11 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Company Links */}
+          {/* Info Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
+            <h3 className="text-white font-semibold mb-4">Information</h3>
             <ul className="space-y-2 text-sm">
-              {footerLinks.company.map((link) => (
+              {footerLinks.info.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-primary transition-colors">
                     {link.name}
@@ -125,14 +118,8 @@ export default function Footer() {
       <div className="border-t border-slate-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-            <p>&copy; 2024 FreshCatch. All rights reserved.</p>
-            <div className="flex gap-6">
-              {footerLinks.legal.map((link) => (
-                <Link key={link.name} href={link.href} className="hover:text-primary transition-colors">
-                  {link.name}
-                </Link>
-              ))}
-            </div>
+            <p>&copy; 2025 FreshCatch. All rights reserved.</p>
+            <p className="text-slate-500">Made with ❤️ in Chennai, Tamil Nadu</p>
           </div>
         </div>
       </div>
