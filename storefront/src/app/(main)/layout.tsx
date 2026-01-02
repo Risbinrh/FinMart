@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MobileNav from "@/components/layout/MobileNav";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 import Providers from "@/components/Providers";
 
 export default function MainLayout({
@@ -16,6 +17,7 @@ export default function MainLayout({
       </main>
       <Footer />
       <MobileNav />
+      <ScrollToTop />
     </Providers>
   );
 }
