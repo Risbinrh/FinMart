@@ -61,7 +61,7 @@ export default function Header() {
               <Fish className="h-6 w-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-primary">FreshCatch</h1>
+              <h1 className="text-xl font-bold text-primary">Meen Box</h1>
               <p className="text-xs text-muted-foreground -mt-1">Fresh Fish Delivery</p>
             </div>
           </Link>

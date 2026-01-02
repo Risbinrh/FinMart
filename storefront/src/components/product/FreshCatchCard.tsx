@@ -116,7 +116,7 @@ export default function FreshCatchCard({ product, view = 'grid' }: FreshCatchCar
                             </div>
 
                             <Button
-                                className="bg-[#006699] hover:bg-[#005580] text-white rounded-full px-8 h-10 gap-2 font-black shadow-md active:scale-95 transition-all w-full sm:w-auto"
+                                className="bg-[#006699] hover:bg-[#005580] text-white rounded-full px-8 h-10 gap-2 font-black shadow-md active:scale-95 transition-all w-full sm:w-auto cursor-pointer"
                                 disabled={isAdding || cartLoading}
                                 onClick={handleAddToCart}
                             >
@@ -201,7 +201,7 @@ export default function FreshCatchCard({ product, view = 'grid' }: FreshCatchCar
 
                         <Button
                             size="sm"
-                            className="bg-primary hover:bg-primary/90 text-white rounded-full px-4 h-7 sm:h-8 gap-1.5 font-black shadow-sm active:scale-95 transition-all"
+                            className="bg-primary hover:bg-primary/90 text-white rounded-full px-4 h-7 sm:h-8 gap-1.5 font-black shadow-sm active:scale-95 transition-all cursor-pointer"
                             disabled={isAdding || cartLoading}
                             onClick={handleAddToCart}
                         >
