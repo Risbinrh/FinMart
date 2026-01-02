@@ -189,12 +189,12 @@ export default function ProductDetailPage() {
           {/* Product Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-cyan-50 shadow-lg">
+            <div className="relative aspect-[15/9] max-w-2xl mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-cyan-50 shadow-lg">
               <Image
                 src={images[selectedImage]}
                 alt={product.title}
                 fill
-                className="object-contain p-6"
+                className="object-contain p-6 rounded-2xl"
               />
 
               {/* Discount Badge */}
@@ -208,11 +208,10 @@ export default function ProductDetailPage() {
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <button
                   onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${
-                    isWishlisted
-                      ? 'bg-red-500 text-white'
-                      : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-                  }`}
+                  className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${isWishlisted
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+                    }`}
                 >
                   <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
                 </button>
@@ -237,11 +236,10 @@ export default function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative h-20 w-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200 bg-gray-50 ${
-                      selectedImage === index
-                        ? 'border-primary shadow-md ring-2 ring-primary/20'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
+                    className={`relative h-20 w-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200 bg-gray-50 ${selectedImage === index
+                      ? 'border-primary shadow-md ring-2 ring-primary/20'
+                      : 'border-transparent hover:border-gray-300'
+                      }`}
                   >
                     <Image
                       src={img}
@@ -256,7 +254,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <div className="space-y-2">
             {/* Freshness Tag */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-medium">
               <Clock className="h-4 w-4" />
@@ -265,74 +263,42 @@ export default function ProductDetailPage() {
 
             {/* Title */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{product.title}</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">{product.title}</h1>
               {tamilName && (
-                <p className="text-xl text-muted-foreground mt-1">{tamilName}</p>
+                <p className="text-base text-muted-foreground mt-1">{tamilName}</p>
               )}
             </div>
 
             {/* Rating */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-full">
-                <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-amber-700">{rating}</span>
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                <span className="font-bold text-amber-700 text-sm">{rating}</span>
               </div>
-              <span className="text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {reviewCount} reviews
               </span>
               <Separator orientation="vertical" className="h-5" />
-              <span className="text-green-600 font-medium">500+ sold</span>
+              <span className="text-sm text-green-600 font-medium">500+ sold</span>
             </div>
 
             {/* Price */}
-            <div className="bg-gradient-to-r from-primary/10 to-transparent rounded-2xl p-5">
+            <div className="bg-gradient-to-r from-primary/10 to-transparent rounded-lg p-3">
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-primary">{formatPrice(currentPrice)}</span>
-                <span className="text-lg text-muted-foreground">/kg</span>
+                <span className="text-2xl font-bold text-primary">{formatPrice(currentPrice)}</span>
+                <span className="text-sm text-muted-foreground">/kg</span>
                 {originalPrice && currentPrice < originalPrice && (
-                  <span className="text-xl text-gray-400 line-through">
+                  <span className="text-base text-gray-400 line-through">
                     {formatPrice(originalPrice)}
                   </span>
                 )}
               </div>
               {discountPercent > 0 && (
-                <p className="text-green-600 font-medium mt-1">
+                <p className="text-xs text-green-600 font-medium mt-1">
                   You save {formatPrice(originalPrice - currentPrice)} ({discountPercent}% off)
                 </p>
               )}
             </div>
-
-            {/* Variant Selection */}
-            {product.variants && product.variants.length > 1 && (
-              <div>
-                <h3 className="font-bold text-lg mb-3">Select Variant</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {product.variants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                        selectedVariant?.id === variant.id
-                          ? 'border-primary bg-primary/5 shadow-md'
-                          : 'border-gray-200 hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="font-semibold text-sm">{variant.title}</p>
-                        {selectedVariant?.id === variant.id && (
-                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-primary font-bold mt-1">
-                        {formatPrice(getVariantPrice(variant))}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Quantity */}
             <div>
@@ -342,9 +308,9 @@ export default function ProductDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-lg"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
+                    className="h-10 w-10 rounded-lg hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => setQuantity(Math.max(.5, quantity - .5))}
+                    disabled={quantity <= .5}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -352,8 +318,8 @@ export default function ProductDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-lg"
-                    onClick={() => setQuantity(quantity + 1)}
+                    className="h-10 w-10 rounded-lg hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => setQuantity(quantity + 0.5)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -365,7 +331,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Total and Buttons */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg border space-y-4">
+            <div className="bg-white rounded-2xl p-4 shadow-lg border space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Price</p>
@@ -380,7 +346,7 @@ export default function ProductDetailPage() {
               <div className="flex gap-3">
                 <Button
                   size="lg"
-                  className="flex-1 h-14 gap-2 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg"
+                  className="flex-1 h-11 gap-2 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg"
                   onClick={handleAddToCart}
                   disabled={isAdding || cartLoading || !selectedVariant}
                 >
@@ -397,7 +363,7 @@ export default function ProductDetailPage() {
                   )}
                 </Button>
                 <Link href="/checkout" className="flex-1">
-                  <Button size="lg" variant="outline" className="w-full h-14 text-base font-semibold border-2 border-primary text-primary hover:bg-primary hover:text-white">
+                  <Button size="lg" variant="outline" className="w-full h-11 text-base font-semibold border-2 border-primary text-primary hover:bg-primary hover:text-white">
                     <Zap className="h-5 w-5 mr-2" />
                     Buy Now
                   </Button>
@@ -407,28 +373,28 @@ export default function ProductDetailPage() {
 
             {/* Features Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2">
                   <Truck className="h-5 w-5 text-blue-600" />
                 </div>
                 <p className="text-xs font-semibold">Free Delivery</p>
                 <p className="text-xs text-muted-foreground">Above ₹300</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
                   <Shield className="h-5 w-5 text-green-600" />
                 </div>
                 <p className="text-xs font-semibold">Fresh Guarantee</p>
                 <p className="text-xs text-muted-foreground">100% Quality</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-2">
                   <Award className="h-5 w-5 text-amber-600" />
                 </div>
                 <p className="text-xs font-semibold">Premium Quality</p>
                 <p className="text-xs text-muted-foreground">Handpicked</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-2">
                   <RotateCcw className="h-5 w-5 text-purple-600" />
                 </div>
@@ -550,11 +516,10 @@ export default function ProductDetailPage() {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`h-5 w-5 ${
-                              star <= Math.round(rating)
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-gray-300'
-                            }`}
+                            className={`h-5 w-5 ${star <= Math.round(rating)
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-gray-300'
+                              }`}
                           />
                         ))}
                       </div>

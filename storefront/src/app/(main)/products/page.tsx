@@ -13,7 +13,14 @@ import {
   X,
   ChevronRight,
   Filter,
-  Loader2
+  Loader2,
+  Waves,
+  Shell,
+  Anchor,
+  Droplets,
+  Sun,
+  LayoutGrid,
+  Shrimp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -148,6 +155,22 @@ function ProductsContent() {
     setFilterOpen(false); // Close mobile filter sheet
   };
 
+  const getCategoryIcon = (name: string | null) => {
+    if (!name) return <LayoutGrid className={`h-4 w-4 ${selectedCategory === 'all' ? 'text-white' : 'text-primary'}`} />;
+
+    const lowerName = name.toLowerCase();
+
+    if (lowerName.includes('premium')) return <Sparkles className="h-4 w-4" />;
+    if (lowerName.includes('sea fish')) return <Waves className="h-4 w-4" />;
+    if (lowerName.includes('prawns') || lowerName.includes('shrimp')) return <Shrimp className="h-4 w-4" />;
+    if (lowerName.includes('crab')) return <Shell className="h-4 w-4" />;
+    if (lowerName.includes('squid')) return <Anchor className="h-4 w-4" />;
+    if (lowerName.includes('river')) return <Droplets className="h-4 w-4" />;
+    if (lowerName.includes('dried')) return <Sun className="h-4 w-4" />;
+
+    return <Fish className="h-4 w-4" />;
+  };
+
   const CategoryButton = ({ category, isMobile = false }: { category: ProductCategory | null; isMobile?: boolean }) => {
     const isAll = category === null;
     const isSelected = isAll ? selectedCategory === 'all' : selectedCategory === category?.handle;
@@ -155,23 +178,22 @@ function ProductsContent() {
     return (
       <button
         onClick={() => handleCategorySelect(isAll ? 'all' : category!.handle)}
-        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between group ${
-          isSelected
-            ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-md'
-            : 'hover:bg-primary/5 text-gray-700'
-        }`}
+        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between group ${isSelected
+          ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-md'
+          : 'hover:bg-primary/5 text-gray-700'
+          }`}
       >
         <span className="flex items-center gap-3">
-          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-            isSelected ? 'bg-white/20' : 'bg-primary/10'
-          }`}>
-            <Fish className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-primary'}`} />
+          <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-white/20' : 'bg-primary/10 group-hover:bg-primary/20'
+            }`}>
+            <div className={isSelected ? 'text-white' : 'text-primary'}>
+              {getCategoryIcon(isAll ? null : category.name)}
+            </div>
           </div>
           {isAll ? 'All Categories' : category?.name}
         </span>
-        <ChevronRight className={`h-4 w-4 transition-transform ${
-          isSelected ? 'text-white' : 'text-gray-400 group-hover:translate-x-1'
-        }`} />
+        <ChevronRight className={`h-4 w-4 transition-transform ${isSelected ? 'text-white' : 'text-gray-400 group-hover:translate-x-1'
+          }`} />
       </button>
     );
   };
@@ -304,11 +326,11 @@ function ProductsContent() {
                 </Select>
 
                 {/* View Mode Toggle */}
-                <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
+                <div className="hidden sm:flex items-center gap-1 bg-muted rounded-full p-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-7 w-7 rounded ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                    className={`h-7 w-7 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary hover:text-primary-foreground' : 'hover:bg-primary/10 text-muted-foreground'}`}
                     onClick={() => setViewMode('grid')}
                   >
                     <Grid3X3 className="h-3.5 w-3.5" />
@@ -316,7 +338,7 @@ function ProductsContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-7 w-7 rounded ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                    className={`h-7 w-7 rounded-full transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary hover:text-primary-foreground' : 'hover:bg-primary/10 text-muted-foreground'}`}
                     onClick={() => setViewMode('list')}
                   >
                     <LayoutList className="h-3.5 w-3.5" />
@@ -346,7 +368,7 @@ function ProductsContent() {
                 }
               >
                 {sortedProducts.map((product) => (
-                  <FreshCatchCard key={product.id} product={product} />
+                  <FreshCatchCard key={product.id} product={product} view={viewMode} />
                 ))}
               </div>
             ) : (
