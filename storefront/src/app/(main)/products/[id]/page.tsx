@@ -24,6 +24,9 @@ import {
   Award,
   Leaf,
   ThermometerSnowflake,
+  PlayCircle,
+  ChefHat,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +36,74 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { medusa, Product, ProductVariant, formatPrice, getVariantPrice } from '@/lib/medusa';
 import { useCart } from '@/context/CartContext';
-import ProductCard from '@/components/product/ProductCard';
+import FreshCatchCard from '@/components/product/FreshCatchCard';
+
+// Fish handle to recipe mapping
+const fishRecipeMap: Record<string, { id: string; title: string; tamilTitle: string; image: string; videoId: string; duration: number; }[]> = {
+  'seer-fish': [
+    { id: '1', title: 'Vanjaram Fish Fry', tamilTitle: 'வஞ்சிரம் வறுவல்', image: 'https://img.youtube.com/vi/o8lDCY2_jyw/maxresdefault.jpg', videoId: 'o8lDCY2_jyw', duration: 30 },
+  ],
+  'mackerel': [
+    { id: '2', title: 'Meen Kuzhambu', tamilTitle: 'மீன் குழம்பு', image: 'https://img.youtube.com/vi/-kPEvUSZkEM/maxresdefault.jpg', videoId: '-kPEvUSZkEM', duration: 40 },
+  ],
+  'tiger-prawns': [
+    { id: '3', title: 'Prawn Biryani', tamilTitle: 'இறால் பிரியாணி', image: 'https://img.youtube.com/vi/OYo9kHRxeH0/maxresdefault.jpg', videoId: 'OYo9kHRxeH0', duration: 60 },
+  ],
+  'prawns': [
+    { id: '3', title: 'Prawn Biryani', tamilTitle: 'இறால் பிரியாணி', image: 'https://img.youtube.com/vi/OYo9kHRxeH0/maxresdefault.jpg', videoId: 'OYo9kHRxeH0', duration: 60 },
+  ],
+  'blue-crab': [
+    { id: '4', title: 'Crab Masala', tamilTitle: 'நண்டு மசாலா', image: 'https://img.youtube.com/vi/2BSVhda6tWs/maxresdefault.jpg', videoId: '2BSVhda6tWs', duration: 50 },
+  ],
+  'crab': [
+    { id: '4', title: 'Crab Masala', tamilTitle: 'நண்டு மசாலா', image: 'https://img.youtube.com/vi/2BSVhda6tWs/maxresdefault.jpg', videoId: '2BSVhda6tWs', duration: 50 },
+  ],
+  'pomfret': [
+    { id: '5', title: 'Kerala Fish Molee', tamilTitle: 'கேரளா மீன் மொலி', image: 'https://img.youtube.com/vi/9qXZ_aous-Y/maxresdefault.jpg', videoId: '9qXZ_aous-Y', duration: 35 },
+  ],
+  'pomfret-white': [
+    { id: '8', title: 'White Pomfret Fry', tamilTitle: 'வெள்ளை வாவல் வறுவல்', image: 'https://img.youtube.com/vi/H88X5b2lx9w/maxresdefault.jpg', videoId: 'H88X5b2lx9w', duration: 30 },
+  ],
+  'pomfret-black': [
+    { id: '9', title: 'Black Pomfret Masala', tamilTitle: 'கருப்பு வாவல் மசாலா', image: 'https://img.youtube.com/vi/-TH4QuqJnUM/hqdefault.jpg', videoId: '-TH4QuqJnUM', duration: 40 },
+  ],
+  'squid': [
+    { id: '6', title: 'Squid Roast', tamilTitle: 'கணவாய் வறுவல்', image: 'https://img.youtube.com/vi/7y0kgjyhHZ8/maxresdefault.jpg', videoId: '7y0kgjyhHZ8', duration: 30 },
+  ],
+  'baby-squid': [
+    { id: '14', title: 'Baby Squid Fry', tamilTitle: 'குட்டி கணவாய் வறுவல்', image: 'https://img.youtube.com/vi/edCbLvpLVEI/maxresdefault.jpg', videoId: 'edCbLvpLVEI', duration: 20 },
+  ],
+  'king-fish': [
+    { id: '7', title: 'King Fish Fry', tamilTitle: 'நெய்மீன் வறுவல்', image: 'https://img.youtube.com/vi/x0h_sDFZn6w/maxresdefault.jpg', videoId: 'x0h_sDFZn6w', duration: 35 },
+  ],
+  'red-snapper': [
+    { id: '10', title: 'Red Snapper Curry', tamilTitle: 'சங்கரா மீன் குழம்பு', image: 'https://img.youtube.com/vi/BacKM_-N2q8/maxresdefault.jpg', videoId: 'BacKM_-N2q8', duration: 45 },
+  ],
+  'barramundi': [
+    { id: '11', title: 'Barramundi Fry', tamilTitle: 'கொடுவா வறுவல்', image: 'https://img.youtube.com/vi/NlL2htQNWoo/hqdefault.jpg', videoId: 'NlL2htQNWoo', duration: 35 },
+  ],
+  'sea-bass': [
+    { id: '11', title: 'Barramundi Fry', tamilTitle: 'கொடுவா வறுவல்', image: 'https://img.youtube.com/vi/NlL2htQNWoo/hqdefault.jpg', videoId: 'NlL2htQNWoo', duration: 35 },
+  ],
+  'indian-salmon': [
+    { id: '12', title: 'Indian Salmon Curry', tamilTitle: 'காலா மீன் குழம்பு', image: 'https://img.youtube.com/vi/SbN8AILtKTQ/maxresdefault.jpg', videoId: 'SbN8AILtKTQ', duration: 45 },
+  ],
+  'sardine': [
+    { id: '13', title: 'Sardine Fry', tamilTitle: 'மத்தி வறுவல்', image: 'https://img.youtube.com/vi/T-CDURLMH6s/maxresdefault.jpg', videoId: 'T-CDURLMH6s', duration: 25 },
+  ],
+  'dried-sardine': [
+    { id: '15', title: 'Dried Sardine Fry', tamilTitle: 'மத்தி கருவாடு வறுவல்', image: 'https://img.youtube.com/vi/NeDBEQtT3EE/hqdefault.jpg', videoId: 'NeDBEQtT3EE', duration: 25 },
+  ],
+  'dried-prawns': [
+    { id: '16', title: 'Dried Prawn Curry', tamilTitle: 'இறால் கருவாடு குழம்பு', image: 'https://img.youtube.com/vi/YQFa018AL5o/maxresdefault.jpg', videoId: 'YQFa018AL5o', duration: 40 },
+  ],
+  'dried-anchovy': [
+    { id: '17', title: 'Dried Anchovy Fry', tamilTitle: 'நெத்திலி கருவாடு வறுவல்', image: 'https://img.youtube.com/vi/62HGi9-qKDI/maxresdefault.jpg', videoId: '62HGi9-qKDI', duration: 20 },
+  ],
+  'anchovy': [
+    { id: '17', title: 'Dried Anchovy Fry', tamilTitle: 'நெத்திலி கருவாடு வறுவல்', image: 'https://img.youtube.com/vi/62HGi9-qKDI/maxresdefault.jpg', videoId: '62HGi9-qKDI', duration: 20 },
+  ],
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -49,6 +119,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [videoModal, setVideoModal] = useState<{ isOpen: boolean; videoId: string; title: string }>({ isOpen: false, videoId: '', title: '' });
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -189,12 +260,12 @@ export default function ProductDetailPage() {
           {/* Product Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-cyan-50 shadow-lg">
+            <div className="relative aspect-[15/9] max-w-2xl mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-cyan-50 shadow-lg">
               <Image
                 src={images[selectedImage]}
                 alt={product.title}
                 fill
-                className="object-contain p-6"
+                className="object-contain p-6 rounded-2xl"
               />
 
               {/* Discount Badge */}
@@ -208,11 +279,10 @@ export default function ProductDetailPage() {
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <button
                   onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${
-                    isWishlisted
-                      ? 'bg-red-500 text-white'
-                      : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-                  }`}
+                  className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${isWishlisted
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+                    }`}
                 >
                   <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
                 </button>
@@ -237,11 +307,10 @@ export default function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative h-20 w-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200 bg-gray-50 ${
-                      selectedImage === index
-                        ? 'border-primary shadow-md ring-2 ring-primary/20'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
+                    className={`relative h-20 w-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200 bg-gray-50 ${selectedImage === index
+                      ? 'border-primary shadow-md ring-2 ring-primary/20'
+                      : 'border-transparent hover:border-gray-300'
+                      }`}
                   >
                     <Image
                       src={img}
@@ -256,7 +325,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <div className="space-y-2">
             {/* Freshness Tag */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-medium">
               <Clock className="h-4 w-4" />
@@ -265,74 +334,42 @@ export default function ProductDetailPage() {
 
             {/* Title */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{product.title}</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">{product.title}</h1>
               {tamilName && (
-                <p className="text-xl text-muted-foreground mt-1">{tamilName}</p>
+                <p className="text-base text-muted-foreground mt-1">{tamilName}</p>
               )}
             </div>
 
             {/* Rating */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-full">
-                <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-amber-700">{rating}</span>
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                <span className="font-bold text-amber-700 text-sm">{rating}</span>
               </div>
-              <span className="text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {reviewCount} reviews
               </span>
               <Separator orientation="vertical" className="h-5" />
-              <span className="text-green-600 font-medium">500+ sold</span>
+              <span className="text-sm text-green-600 font-medium">500+ sold</span>
             </div>
 
             {/* Price */}
-            <div className="bg-gradient-to-r from-primary/10 to-transparent rounded-2xl p-5">
+            <div className="bg-gradient-to-r from-primary/10 to-transparent rounded-lg p-3">
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-primary">{formatPrice(currentPrice)}</span>
-                <span className="text-lg text-muted-foreground">/kg</span>
+                <span className="text-2xl font-bold text-primary">{formatPrice(currentPrice)}</span>
+                <span className="text-sm text-muted-foreground">/kg</span>
                 {originalPrice && currentPrice < originalPrice && (
-                  <span className="text-xl text-gray-400 line-through">
+                  <span className="text-base text-gray-400 line-through">
                     {formatPrice(originalPrice)}
                   </span>
                 )}
               </div>
               {discountPercent > 0 && (
-                <p className="text-green-600 font-medium mt-1">
+                <p className="text-xs text-green-600 font-medium mt-1">
                   You save {formatPrice(originalPrice - currentPrice)} ({discountPercent}% off)
                 </p>
               )}
             </div>
-
-            {/* Variant Selection */}
-            {product.variants && product.variants.length > 1 && (
-              <div>
-                <h3 className="font-bold text-lg mb-3">Select Variant</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {product.variants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                        selectedVariant?.id === variant.id
-                          ? 'border-primary bg-primary/5 shadow-md'
-                          : 'border-gray-200 hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="font-semibold text-sm">{variant.title}</p>
-                        {selectedVariant?.id === variant.id && (
-                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-primary font-bold mt-1">
-                        {formatPrice(getVariantPrice(variant))}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Quantity */}
             <div>
@@ -342,9 +379,9 @@ export default function ProductDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-lg"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
+                    className="h-10 w-10 rounded-lg hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => setQuantity(Math.max(.5, quantity - .5))}
+                    disabled={quantity <= .5}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -352,8 +389,8 @@ export default function ProductDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-lg"
-                    onClick={() => setQuantity(quantity + 1)}
+                    className="h-10 w-10 rounded-lg hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => setQuantity(quantity + 0.5)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -365,7 +402,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Total and Buttons */}
-            <div className="bg-white rounded-2xl p-5 shadow-lg border space-y-4">
+            <div className="bg-white rounded-2xl p-4 shadow-lg border space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Price</p>
@@ -380,7 +417,7 @@ export default function ProductDetailPage() {
               <div className="flex gap-3">
                 <Button
                   size="lg"
-                  className="flex-1 h-14 gap-2 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg"
+                  className="flex-1 h-11 gap-2 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg"
                   onClick={handleAddToCart}
                   disabled={isAdding || cartLoading || !selectedVariant}
                 >
@@ -397,7 +434,7 @@ export default function ProductDetailPage() {
                   )}
                 </Button>
                 <Link href="/checkout" className="flex-1">
-                  <Button size="lg" variant="outline" className="w-full h-14 text-base font-semibold border-2 border-primary text-primary hover:bg-primary hover:text-white">
+                  <Button size="lg" variant="outline" className="w-full h-11 text-base font-semibold border-2 border-primary text-primary hover:bg-primary hover:text-white">
                     <Zap className="h-5 w-5 mr-2" />
                     Buy Now
                   </Button>
@@ -407,28 +444,28 @@ export default function ProductDetailPage() {
 
             {/* Features Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2">
                   <Truck className="h-5 w-5 text-blue-600" />
                 </div>
                 <p className="text-xs font-semibold">Free Delivery</p>
                 <p className="text-xs text-muted-foreground">Above ₹300</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
                   <Shield className="h-5 w-5 text-green-600" />
                 </div>
                 <p className="text-xs font-semibold">Fresh Guarantee</p>
                 <p className="text-xs text-muted-foreground">100% Quality</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-2">
                   <Award className="h-5 w-5 text-amber-600" />
                 </div>
                 <p className="text-xs font-semibold">Premium Quality</p>
                 <p className="text-xs text-muted-foreground">Handpicked</p>
               </div>
-              <div className="text-center p-4 bg-white rounded-xl border">
+              <div className="text-center p-3 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-2">
                   <RotateCcw className="h-5 w-5 text-purple-600" />
                 </div>
@@ -550,11 +587,10 @@ export default function ProductDetailPage() {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`h-5 w-5 ${
-                              star <= Math.round(rating)
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-gray-300'
-                            }`}
+                            className={`h-5 w-5 ${star <= Math.round(rating)
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-gray-300'
+                              }`}
                           />
                         ))}
                       </div>
@@ -597,11 +633,77 @@ export default function ProductDetailPage() {
           </Tabs>
         </div>
 
+        {/* Recipe Section */}
+        {fishRecipeMap[handle] && fishRecipeMap[handle].length > 0 && (
+          <div className="mt-12">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                  <ChefHat className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold">Recipe for {product.title}</h2>
+                  <p className="text-muted-foreground text-sm">Learn how to cook this delicious fish</p>
+                </div>
+              </div>
+              <Link href="/recipes">
+                <Button variant="ghost" className="gap-1">
+                  All Recipes
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {fishRecipeMap[handle].map((recipe) => (
+                <Card
+                  key={recipe.id}
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 group border-0 shadow-lg cursor-pointer"
+                  onClick={() => setVideoModal({ isOpen: true, videoId: recipe.videoId, title: recipe.title })}
+                >
+                  <div className="relative aspect-video">
+                    <Image
+                      src={recipe.image}
+                      alt={recipe.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-16 w-16 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <PlayCircle className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+                    <Badge className="absolute top-3 right-3 bg-red-600 text-white">
+                      Video Recipe
+                    </Badge>
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h3 className="text-white font-bold text-lg">{recipe.title}</h3>
+                      <p className="text-white/80 text-sm">{recipe.tamilTitle}</p>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm">{recipe.duration} mins</span>
+                      </div>
+                      <Button size="sm" variant="outline" className="gap-1">
+                        Watch Now
+                        <PlayCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl md:text-3xl font-bold">You May Also Like</h2>
+              <h2 className="text-2xl md:text-3xl font-bold">Similar Fishes You May Like</h2>
               <Link href="/products">
                 <Button variant="ghost" className="gap-1">
                   View All
@@ -611,12 +713,40 @@ export default function ProductDetailPage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {relatedProducts.map((p) => (
-                <ProductCard key={p.id} product={p} />
+                <FreshCatchCard key={p.id} product={p} />
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Video Modal */}
+      {videoModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl mx-4">
+            <button
+              onClick={() => setVideoModal({ isOpen: false, videoId: '', title: '' })}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <div className="bg-black rounded-lg overflow-hidden shadow-2xl">
+              <div className="aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoModal.videoId}?autoplay=1`}
+                  title={videoModal.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="p-4 bg-gray-900">
+                <h3 className="text-white font-bold text-lg">{videoModal.title}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

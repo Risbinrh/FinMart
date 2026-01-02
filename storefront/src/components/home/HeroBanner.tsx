@@ -11,7 +11,7 @@ const slides = [
     title: 'Premium Sea Fish',
     subtitle: 'CATCH OF THE DAY',
     description: 'Experience the finest Emperor fish (Eari), delivered straight from the boat.',
-    image: '/images/carousel/emperor_fish_creative.png',
+    image: '',
     cta: 'Shop Sea Fish',
     href: '/products',
     gradient: 'from-slate-900/40 via-slate-900/20 to-transparent',
@@ -21,7 +21,7 @@ const slides = [
     title: 'Fresh Prawns Daily',
     subtitle: 'PREMIUM SELECTION',
     description: 'Premium tiger prawns delivered before sunrise to ensure maximum freshness.',
-    image: '/images/carousel/tiger_prawns_creative.png',
+    image: '',
     cta: 'Order Prawns',
     href: '/products?category=prawns',
     gradient: 'from-teal-900/40 via-teal-900/20 to-transparent',
@@ -31,7 +31,7 @@ const slides = [
     title: 'Black Pomfret',
     subtitle: 'CUSTOMER FAVORITE',
     description: 'Discover the rich taste of fresh Black Pomfret, perfect for frying or curry.',
-    image: '/images/carousel/black_pomfret_creative.png',
+    image: '',
     cta: 'Shop Pomfret',
     href: '/products',
     gradient: 'from-orange-900/40 via-orange-900/20 to-transparent',
@@ -55,7 +55,7 @@ export default function HeroBanner() {
   return (
     <section className="relative w-full bg-white overflow-hidden">
       {/* Full Width Banner - Small Height */}
-      <div className="relative h-[200px] sm:h-[250px] lg:h-[300px] w-full">
+      <div className="relative h-[150px] sm:h-[180px] lg:h-[220px] container mx-auto overflow-hidden rounded-xl">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
@@ -64,11 +64,11 @@ export default function HeroBanner() {
           >
             {/* Background Image - Object fit cover to fill the wide area */}
             <div
-              className="absolute inset-0 bg-cover bg-center"
+              className="absolute inset-0 bg-contain bg-center bg-no-repeat rounded-xl"
               style={{ backgroundImage: `url(${slide.image})` }}
             />
             {/* Soft Gradient Overlay for text readability without darkening too much */}
-            <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
+            <div className={`rounded-xl absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
 
             {/* Content positioned to the left */}
             <div className="container mx-auto px-4 h-full relative">
@@ -120,8 +120,8 @@ export default function HeroBanner() {
               key={index}
               onClick={() => goToSlide(index)}
               className={`transition-all duration-300 ${index === currentSlide
-                  ? 'w-6 h-1.5 bg-white rounded-full'
-                  : 'w-1.5 h-1.5 bg-white/40 rounded-full hover:bg-white/60'
+                ? 'w-6 h-1.5 bg-white rounded-full'
+                : 'w-1.5 h-1.5 bg-white/40 rounded-full hover:bg-white/60'
                 }`}
             />
           ))}
