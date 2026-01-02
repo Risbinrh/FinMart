@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import ProductCard from '@/components/product/ProductCard';
+import FreshCatchCard from '@/components/product/FreshCatchCard';
 import { medusa, Product, ProductCategory } from '@/lib/medusa';
 import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
@@ -362,7 +362,7 @@ function ProductsContent() {
                 }
               >
                 {sortedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <FreshCatchCard key={product.id} product={product} view={viewMode} />
                 ))}
               </div>
             ) : (

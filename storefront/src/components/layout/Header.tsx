@@ -59,8 +59,8 @@ export default function Header() {
               <Fish className="h-6 w-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-primary">FreshCatch</h1>
-              <p className="text-xs text-muted-foreground -mt-1">{t('freshFishDelivery', language)}</p>
+              <h1 className="text-xl font-bold text-primary">Meen Box</h1>
+              <p className="text-xs text-muted-foreground -mt-1">Fresh Fish Delivery</p>
             </div>
           </Link>
 
@@ -92,13 +92,13 @@ export default function Header() {
           {/* Actions */}
           <div className="flex items-center gap-2">
             {/* Search - Mobile */}
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button variant="ghost" size="icon" className="md:hidden rounded-full">
               <Search className="h-5 w-5" />
             </Button>
 
             {/* User */}
             <Link href={isAuthenticated ? '/profile' : '/login'}>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative rounded-full">
                 <User className="h-5 w-5" />
                 {isAuthenticated && (
                   <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500" />
@@ -108,10 +108,10 @@ export default function Header() {
 
             {/* Cart */}
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative rounded-full">
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground">
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground">
                     {itemCount > 99 ? '99+' : itemCount}
                   </Badge>
                 )}
