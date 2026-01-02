@@ -148,7 +148,7 @@ export default function CartPage() {
               <div className="flex flex-wrap justify-center gap-2">
                 {['Sea Fish', 'Prawns', 'Crabs', 'River Fish'].map((cat) => (
                   <Link key={cat} href={`/products?category=${cat.toLowerCase().replace(' ', '-')}`}>
-                    <Badge variant="secondary" className="px-4 py-2 cursor-pointer hover:bg-primary hover:text-white transition-colors">
+                    <Badge className="px-4 py-2 cursor-pointer transition-colors">
                       {cat}
                     </Badge>
                   </Link>
