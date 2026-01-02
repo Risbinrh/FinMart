@@ -30,6 +30,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
 
 function ProductsContent() {
+
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
 
