@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Product, formatPrice, getVariantPrice } from '@/lib/medusa';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 interface ProductCardProps {
   product: Product;
@@ -18,6 +20,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, isLoading: cartLoading } = useCart();
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const { language } = useLanguage();
 
   // Get first variant for default price display
   const defaultVariant = product.variants?.[0];
@@ -27,7 +30,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const tamilName = product.subtitle || (product.metadata?.tamil_name as string) || '';
 
   // Get freshness from metadata
-  const freshness = (product.metadata?.freshness as string) || 'Fresh catch of the day';
+  const freshness = (product.metadata?.freshness as string) || t('caughtFreshThisMorning', language);
 
   // Get rating from metadata
   const rating = (product.metadata?.rating as number) || 4.5;
@@ -84,17 +87,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="absolute top-3 left-3 flex flex-col gap-1.5">
             {discountPercent > 0 && (
               <Badge className="bg-red-500 hover:bg-red-500 text-white text-xs font-bold px-2 py-1 shadow-lg">
-                {discountPercent}% OFF
+                {discountPercent}% {t('off', language)}
               </Badge>
             )}
             {product.tags?.some(t => t.value === 'bestseller') && (
               <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold px-2 py-1 shadow-lg">
-                Best Seller
+                {t('bestSeller', language)}
               </Badge>
             )}
             {isLimited && (
               <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium">
-                Only few left
+                {t('onlyFewLeft', language)}
               </Badge>
             )}
           </div>
@@ -103,11 +106,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="absolute top-3 right-3 flex flex-col gap-2">
             <button
               onClick={handleWishlist}
-              className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${
-                isWishlisted
-                  ? 'bg-red-500 text-white'
-                  : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-              }`}
+              className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${isWishlisted
+                ? 'bg-red-500 text-white'
+                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+                }`}
             >
               <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
             </button>
@@ -118,17 +120,15 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* Stock Indicator */}
           <div className="absolute bottom-3 left-3">
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
-              !isInStock
-                ? 'bg-red-100 text-red-700'
-                : isLimited
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-green-100 text-green-700'
-            }`}>
-              <div className={`h-2 w-2 rounded-full ${
-                !isInStock ? 'bg-red-500' : isLimited ? 'bg-amber-500' : 'bg-green-500'
-              }`} />
-              {!isInStock ? 'Out of Stock' : isLimited ? 'Limited Stock' : 'In Stock'}
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${!isInStock
+              ? 'bg-red-100 text-red-700'
+              : isLimited
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-green-100 text-green-700'
+              }`}>
+              <div className={`h-2 w-2 rounded-full ${!isInStock ? 'bg-red-500' : isLimited ? 'bg-amber-500' : 'bg-green-500'
+                }`} />
+              {!isInStock ? t('outOfStock', language) : isLimited ? t('onlyFewLeft', language) : t('inStock', language)}
             </div>
           </div>
         </div>
@@ -144,13 +144,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* Name */}
           <h3 className="font-bold text-base leading-tight line-clamp-1 group-hover:text-primary transition-colors mb-0.5">
-            {product.title}
+            {language === 'ta' && tamilName ? tamilName : product.title}
           </h3>
-
-          {/* Tamil Name */}
-          {tamilName && (
-            <p className="text-xs text-muted-foreground mb-2">{tamilName}</p>
-          )}
 
           {/* Rating */}
           <div className="flex items-center gap-2 mb-3">
@@ -158,11 +153,10 @@ export default function ProductCard({ product }: ProductCardProps) {
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-3.5 w-3.5 ${
-                    i < Math.floor(rating)
-                      ? 'fill-amber-400 text-amber-400'
-                      : 'fill-gray-200 text-gray-200'
-                  }`}
+                  className={`h-3.5 w-3.5 ${i < Math.floor(rating)
+                    ? 'fill-amber-400 text-amber-400'
+                    : 'fill-gray-200 text-gray-200'
+                    }`}
                 />
               ))}
             </div>
@@ -176,7 +170,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span className="text-xl font-bold text-gray-900">
               {formatPrice(price)}
             </span>
-            <span className="text-sm text-muted-foreground">/kg</span>
+            <span className="text-sm text-muted-foreground">{t('perKgSlash', language)}</span>
             {originalPrice && price < originalPrice && (
               <span className="text-sm text-gray-400 line-through">
                 {formatPrice(originalPrice)}
@@ -187,25 +181,24 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Add to Cart Button */}
         <Button
-          className={`w-full h-11 gap-2 font-semibold text-sm transition-all duration-300 ${
-            isInStock
-              ? 'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg'
-              : 'bg-gray-200 text-gray-500'
-          }`}
+          className={`w-full h-11 gap-2 font-semibold text-sm transition-all duration-300 ${isInStock
+            ? 'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg'
+            : 'bg-gray-200 text-gray-500'
+            }`}
           disabled={!isInStock || isAdding || cartLoading}
           onClick={handleAddToCart}
         >
           {isAdding ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Adding...
+              {language === 'ta' ? 'சேர்க்கிறது...' : 'Adding...'}
             </>
           ) : !isInStock ? (
-            'Out of Stock'
+            t('outOfStock', language)
           ) : (
             <>
               <ShoppingCart className="h-4 w-4" />
-              Add to Cart
+              {t('addToCart', language)}
             </>
           )}
         </Button>

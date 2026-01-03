@@ -1,35 +1,40 @@
+'use client';
+
 import Link from 'next/link';
 import { Fish, Phone, Mail, MapPin, Facebook, Instagram, Twitter } from 'lucide-react';
-
-const footerLinks = {
-  shop: [
-    { name: 'All Products', href: '/products' },
-    { name: 'Sea Fish', href: '/products?category=sea-fish' },
-    { name: 'River Fish', href: '/products?category=river-fish' },
-    { name: 'Prawns & Crabs', href: '/products?category=prawns' },
-    { name: 'Recipes', href: '/recipes' },
-  ],
-  support: [
-    { name: 'Contact Us', href: '/contact' },
-    { name: 'FAQs', href: '/faqs' },
-    { name: 'Delivery Info', href: '/delivery' },
-    { name: 'Track Order', href: '/track-order' },
-    { name: 'Returns', href: '/returns' },
-  ],
-  company: [
-    { name: 'About Us', href: '/about' },
-    { name: 'Our Story', href: '/our-story' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'Blog', href: '/blog' },
-  ],
-  legal: [
-    { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'Terms of Service', href: '/terms' },
-    { name: 'Refund Policy', href: '/refund' },
-  ],
-};
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 export default function Footer() {
+  const { language } = useLanguage();
+
+  const footerLinks = {
+    shop: [
+      { name: t('allProducts', language), href: '/products' },
+      { name: t('seaFish', language), href: '/products?category=sea-fish' },
+      { name: t('riverFish', language), href: '/products?category=river-fish' },
+      { name: t('prawnsCrabs', language), href: '/products?category=prawns' },
+      { name: t('recipes', language), href: '/recipes' },
+    ],
+    support: [
+      { name: t('contactUs', language), href: '/contact' },
+      { name: t('faqs', language), href: '/faqs' },
+      { name: t('deliveryInfo', language), href: '/delivery' },
+      { name: t('trackOrder', language), href: '/track-order' },
+      { name: t('returns', language), href: '/returns' },
+    ],
+    company: [
+      { name: t('aboutUs', language), href: '/about' },
+      { name: t('ourStory', language), href: '/our-story' },
+      { name: t('careers', language), href: '/careers' },
+      { name: t('blog', language), href: '/blog' },
+    ],
+    legal: [
+      { name: t('privacyPolicy', language), href: '/privacy' },
+      { name: t('termsOfService', language), href: '/terms' },
+      { name: t('refundPolicy', language), href: '/refund' },
+    ],
+  };
   return (
     <footer className="bg-slate-900 text-slate-300">
       {/* Main Footer */}
@@ -43,12 +48,11 @@ export default function Footer() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">FreshCatch</h2>
-                <p className="text-xs text-slate-400">Fresh Fish Delivery</p>
+                <p className="text-xs text-slate-400">{t('freshFishDelivery', language)}</p>
               </div>
             </Link>
             <p className="text-sm mb-4 max-w-sm">
-              Bringing the freshest catch from the sea to your doorstep.
-              Quality fish, delivered fresh every day across Tamil Nadu.
+              {t('footerTagline', language)}
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
@@ -61,14 +65,14 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span>Chennai, Tamil Nadu</span>
+                <span>{t('locationCity', language)}</span>
               </div>
             </div>
           </div>
 
           {/* Shop Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Shop</h3>
+            <h3 className="text-white font-semibold mb-4">{t('shop', language)}</h3>
             <ul className="space-y-2 text-sm">
               {footerLinks.shop.map((link) => (
                 <li key={link.name}>
@@ -82,7 +86,7 @@ export default function Footer() {
 
           {/* Support Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Support</h3>
+            <h3 className="text-white font-semibold mb-4">{t('support', language)}</h3>
             <ul className="space-y-2 text-sm">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
@@ -96,7 +100,7 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Company</h3>
+            <h3 className="text-white font-semibold mb-4">{t('company', language)}</h3>
             <ul className="space-y-2 text-sm">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
@@ -125,7 +129,7 @@ export default function Footer() {
       <div className="border-t border-slate-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-            <p>&copy; 2024 FreshCatch. All rights reserved.</p>
+            <p>&copy; 2024 FreshCatch. {t('allRightsReserved', language)}</p>
             <div className="flex gap-6">
               {footerLinks.legal.map((link) => (
                 <Link key={link.name} href={link.href} className="hover:text-primary transition-colors">

@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Clock, Users, PlayCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 const recipes = [
   {
@@ -14,6 +18,7 @@ const recipes = [
     servings: 4,
     difficulty: 'Easy',
     fish: 'Seer Fish',
+    tamilFish: 'சுரா மீன்',
     isVideo: true,
   },
   {
@@ -25,6 +30,7 @@ const recipes = [
     servings: 4,
     difficulty: 'Medium',
     fish: 'Tiger Prawns',
+    tamilFish: 'புலி இறால்',
     isVideo: true,
   },
   {
@@ -36,24 +42,26 @@ const recipes = [
     servings: 4,
     difficulty: 'Easy',
     fish: 'Red Snapper',
+    tamilFish: 'சிவப்பு மீன்',
     isVideo: false,
   },
 ];
 
 export default function RecipeSuggestions() {
+  const { language } = useLanguage();
   return (
     <section className="py-8 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold">Recipe Ideas</h2>
-            <p className="text-sm text-muted-foreground">Cook like a pro with our recipes</p>
+            <h2 className="text-xl sm:text-2xl font-bold">{t('recipeIdeas', language)}</h2>
+            <p className="text-sm text-muted-foreground">{t('cookLikePro', language)}</p>
           </div>
           <Link
             href="/recipes"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            View All
+            {t('viewAll', language)}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
@@ -75,14 +83,13 @@ export default function RecipeSuggestions() {
                     </div>
                   )}
                   <Badge className="absolute top-2 left-2 bg-primary">
-                    {recipe.difficulty}
+                    {t(recipe.difficulty.toLowerCase() as 'easy' | 'medium' | 'hard', language)}
                   </Badge>
                 </div>
                 <CardContent className="p-4">
                   <h3 className="font-semibold text-base mb-1 group-hover:text-primary transition-colors">
-                    {recipe.title}
+                    {language === 'ta' ? recipe.tamilTitle : recipe.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mb-3">{recipe.tamilTitle}</p>
 
                   <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                     <div className="flex items-center gap-1">
@@ -91,12 +98,12 @@ export default function RecipeSuggestions() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-3.5 w-3.5" />
-                      <span>{recipe.servings} servings</span>
+                      <span>{recipe.servings} {t('servings', language)}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-xs">Best with: <span className="font-medium text-primary">{recipe.fish}</span></span>
+                    <span className="text-xs">{t('bestWith', language)} <span className="font-medium text-primary">{language === 'ta' ? recipe.tamilFish : recipe.fish}</span></span>
                   </div>
                 </CardContent>
               </Card>

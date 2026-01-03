@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, User, MapPin, Menu, Fish } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,18 +10,30 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-
-const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'Products', href: '/products' },
-  { name: 'Recipes', href: '/recipes' },
-  { name: 'About', href: '/about' },
-];
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
+import LanguageDropdown from '@/components/LanguageDropdown';
 
 export default function Header() {
+  const router = useRouter();
   const { itemCount } = useCart();
   const { isAuthenticated, customer } = useAuth();
-  const [location] = useState('Chennai, Tamil Nadu');
+  const { language } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const navigation = [
+    { name: t('home', language), href: '/' },
+    { name: t('products', language), href: '/products' },
+    { name: t('recipes', language), href: '/recipes' },
+    { name: t('about', language), href: '/about' },
+  ];
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -30,14 +43,15 @@ export default function Header() {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-1 text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
-              <span>Delivering to: </span>
+              <span>{t('deliveringTo', language)} </span>
               <button className="font-medium text-primary hover:underline">
-                {location}
+                {t('locationCity', language)}
               </button>
             </div>
             <div className="hidden md:flex items-center gap-4 text-muted-foreground">
-              <Link href="/orders" className="hover:text-primary">Track Order</Link>
-              <Link href="/help" className="hover:text-primary">Help</Link>
+              <Link href="/orders" className="hover:text-primary">{t('trackOrder', language)}</Link>
+              <Link href="/help" className="hover:text-primary">{t('help', language)}</Link>
+              <LanguageDropdown />
             </div>
           </div>
         </div>
@@ -53,21 +67,23 @@ export default function Header() {
             </div>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-primary">FreshCatch</h1>
-              <p className="text-xs text-muted-foreground -mt-1">Fresh Fish Delivery</p>
+              <p className="text-xs text-muted-foreground -mt-1">{t('freshFishDelivery', language)}</p>
             </div>
           </Link>
 
           {/* Search - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-xl">
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search for fish, prawns, crabs..."
+                placeholder={t('searchPlaceholder', language)}
                 className="w-full pl-10 pr-4 bg-muted/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-          </div>
+          </form>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6">
@@ -85,13 +101,13 @@ export default function Header() {
           {/* Actions */}
           <div className="flex items-center gap-2">
             {/* Search - Mobile */}
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button variant="ghost" size="icon" className="md:hidden rounded-full">
               <Search className="h-5 w-5" />
             </Button>
 
             {/* User */}
             <Link href={isAuthenticated ? '/profile' : '/login'}>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative rounded-full">
                 <User className="h-5 w-5" />
                 {isAuthenticated && (
                   <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500" />
@@ -101,10 +117,10 @@ export default function Header() {
 
             {/* Cart */}
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative rounded-full">
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground">
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground">
                     {itemCount > 99 ? '99+' : itemCount}
                   </Badge>
                 )}
@@ -120,14 +136,16 @@ export default function Header() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px]">
                 <div className="flex flex-col gap-6 mt-6">
-                  <div className="relative">
+                  <form onSubmit={handleSearch} className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="search"
-                      placeholder="Search..."
+                      placeholder={t('search', language)}
                       className="w-full pl-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                  </div>
+                  </form>
                   <nav className="flex flex-col gap-4">
                     {navigation.map((item) => (
                       <Link
@@ -143,20 +161,23 @@ export default function Header() {
                     {isAuthenticated ? (
                       <div className="space-y-3">
                         <p className="text-sm text-muted-foreground">
-                          Welcome, {customer?.first_name || 'User'}!
+                          {t('welcome', language)}, {customer?.first_name || 'User'}!
                         </p>
                         <Link href="/profile">
-                          <Button variant="outline" className="w-full">My Account</Button>
+                          <Button variant="outline" className="w-full">{t('myAccount', language)}</Button>
                         </Link>
                         <Link href="/orders">
-                          <Button variant="outline" className="w-full">My Orders</Button>
+                          <Button variant="outline" className="w-full">{t('myOrders', language)}</Button>
                         </Link>
                       </div>
                     ) : (
                       <Link href="/login">
-                        <Button className="w-full">Login / Register</Button>
+                        <Button className="w-full">{t('loginRegister', language)}</Button>
                       </Link>
                     )}
+                    <div className="mt-4 pt-4 border-t">
+                      <LanguageDropdown />
+                    </div>
                   </div>
                 </div>
               </SheetContent>

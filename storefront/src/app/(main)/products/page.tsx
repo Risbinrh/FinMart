@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
-  Search,
-  SlidersHorizontal,
   Grid3X3,
   LayoutList,
   Fish,
@@ -15,29 +13,58 @@ import {
   X,
   ChevronRight,
   Filter,
-  Loader2
+  Loader2,
+  Waves,
+  Shell,
+  Anchor,
+  Droplets,
+  Sun,
+  LayoutGrid,
+  Shrimp,
+  Search
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import ProductCard from '@/components/product/ProductCard';
+import FreshCatchCard from '@/components/product/FreshCatchCard';
 import { medusa, Product, ProductCategory } from '@/lib/medusa';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 function ProductsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const searchQuery = searchParams.get('q') || '';
+
+  const setSearchQuery = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set('q', value);
+    } else {
+      params.delete('q');
+    }
+    router.push(`/products${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
+  const clearSearch = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('q');
+    router.push(`/products${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { language } = useLanguage();
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // Fetch categories
   useEffect(() => {
@@ -54,6 +81,11 @@ function ProductsContent() {
 
   // Fetch products
   useEffect(() => {
+    // Wait for categories to load before filtering by category
+    if (selectedCategory !== 'all' && categories.length === 0) {
+      return; // Will re-run when categories load
+    }
+
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
@@ -69,8 +101,8 @@ function ProductsContent() {
 
         const { products } = await medusa.getProducts({
           limit: 50,
-          q: searchQuery || undefined,
           category_id: categoryIds,
+          q: searchQuery || undefined,
         });
         setProducts(products);
       } catch (error) {
@@ -80,7 +112,7 @@ function ProductsContent() {
       }
     };
     fetchProducts();
-  }, [searchQuery, selectedCategory, categories]);
+  }, [selectedCategory, categories, searchQuery]);
 
   // Update selected category when URL param changes
   useEffect(() => {
@@ -90,9 +122,21 @@ function ProductsContent() {
   }, [categoryParam]);
 
   // Sort products client-side
+  // Helper to get product price (supports both Medusa v1 and v2)
+  const getProductPrice = (product: Product): number => {
+    const variant = product.variants?.[0];
+    if (!variant) return 0;
+    // Medusa v2: calculated_price
+    if (variant.calculated_price?.calculated_amount) {
+      return variant.calculated_price.calculated_amount;
+    }
+    // Medusa v1 fallback: prices array
+    return variant.prices?.[0]?.amount || 0;
+  };
+
   const sortedProducts = [...products].sort((a, b) => {
-    const priceA = a.variants?.[0]?.prices?.[0]?.amount || 0;
-    const priceB = b.variants?.[0]?.prices?.[0]?.amount || 0;
+    const priceA = getProductPrice(a);
+    const priceB = getProductPrice(b);
 
     switch (sortBy) {
       case 'price-low':
@@ -121,30 +165,50 @@ function ProductsContent() {
     </div>
   );
 
+  const handleCategorySelect = (handle: string) => {
+    setSelectedCategory(handle);
+    setFilterOpen(false); // Close mobile filter sheet
+  };
+
+  const getCategoryIcon = (name: string | null) => {
+    if (!name) return <LayoutGrid className={`h-4 w-4 ${selectedCategory === 'all' ? 'text-white' : 'text-primary'}`} />;
+
+    const lowerName = name.toLowerCase();
+
+    if (lowerName.includes('premium')) return <Sparkles className="h-4 w-4" />;
+    if (lowerName.includes('sea fish')) return <Waves className="h-4 w-4" />;
+    if (lowerName.includes('prawns') || lowerName.includes('shrimp')) return <Shrimp className="h-4 w-4" />;
+    if (lowerName.includes('crab')) return <Shell className="h-4 w-4" />;
+    if (lowerName.includes('squid')) return <Anchor className="h-4 w-4" />;
+    if (lowerName.includes('river')) return <Droplets className="h-4 w-4" />;
+    if (lowerName.includes('dried')) return <Sun className="h-4 w-4" />;
+
+    return <Fish className="h-4 w-4" />;
+  };
+
   const CategoryButton = ({ category, isMobile = false }: { category: ProductCategory | null; isMobile?: boolean }) => {
     const isAll = category === null;
     const isSelected = isAll ? selectedCategory === 'all' : selectedCategory === category?.handle;
 
     return (
       <button
-        onClick={() => setSelectedCategory(isAll ? 'all' : category!.handle)}
-        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between group ${
-          isSelected
-            ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-md'
-            : 'hover:bg-primary/5 text-gray-700'
-        }`}
+        onClick={() => handleCategorySelect(isAll ? 'all' : category!.handle)}
+        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between group ${isSelected
+          ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-md'
+          : 'hover:bg-primary/5 text-gray-700'
+          }`}
       >
         <span className="flex items-center gap-3">
-          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-            isSelected ? 'bg-white/20' : 'bg-primary/10'
-          }`}>
-            <Fish className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-primary'}`} />
+          <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-white/20' : 'bg-primary/10 group-hover:bg-primary/20'
+            }`}>
+            <div className={isSelected ? 'text-white' : 'text-primary'}>
+              {getCategoryIcon(isAll ? null : category.name)}
+            </div>
           </div>
-          {isAll ? 'All Categories' : category?.name}
+          {isAll ? t('allCategories', language) : (language === 'ta' && typeof category?.metadata?.tamil_name === 'string' ? category.metadata.tamil_name : category?.name)}
         </span>
-        <ChevronRight className={`h-4 w-4 transition-transform ${
-          isSelected ? 'text-white' : 'text-gray-400 group-hover:translate-x-1'
-        }`} />
+        <ChevronRight className={`h-4 w-4 transition-transform ${isSelected ? 'text-white' : 'text-gray-400 group-hover:translate-x-1'
+          }`} />
       </button>
     );
   };
@@ -157,14 +221,13 @@ function ProductsContent() {
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 mb-3">
               <Fish className="h-6 w-6" />
-              <span className="text-primary-foreground/80 text-sm font-medium">Fresh from the Ocean</span>
+              <span className="text-primary-foreground/80 text-sm font-medium">{t('freshFromOcean', language)}</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              Fresh Fish & Seafood
+              {t('freshFishSeafood', language)}
             </h1>
             <p className="text-primary-foreground/80 text-lg">
-              Discover our selection of {isLoading ? '...' : products.length}+ premium quality fish and seafood,
-              delivered fresh to your doorstep.
+              {t('discoverSelection', language)} {isLoading ? '...' : products.length}+ {t('premiumQuality', language)}
             </p>
           </div>
         </div>
@@ -179,7 +242,7 @@ function ProductsContent() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search for fish, prawns, crabs..."
+                placeholder={t('searchProductsPlaceholder', language)}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 h-12 text-base bg-gray-50 border-gray-200 focus:bg-white rounded-xl"
@@ -199,22 +262,22 @@ function ProductsContent() {
               <SelectTrigger className="w-full sm:w-[200px] h-12 bg-gray-50 border-gray-200 rounded-xl">
                 <div className="flex items-center gap-2">
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('sortBy', language)} />
                 </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="popular">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
-                    Most Popular
+                    {t('mostPopular', language)}
                   </div>
                 </SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="price-low">{t('priceLowToHigh', language)}</SelectItem>
+                <SelectItem value="price-high"> {t('priceHighToLow', language)}</SelectItem>
                 <SelectItem value="newest">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    Newest First
+                    {t('newestFirst', language)}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -225,7 +288,7 @@ function ProductsContent() {
               <SheetTrigger asChild>
                 <Button variant="outline" className="sm:hidden h-12 gap-2 rounded-xl border-gray-200">
                   <Filter className="h-4 w-4" />
-                  Filters
+                  {t('filters', language)}
                   {selectedCategory !== 'all' && (
                     <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">1</Badge>
                   )}
@@ -235,12 +298,12 @@ function ProductsContent() {
                 <SheetHeader>
                   <SheetTitle className="flex items-center gap-2">
                     <Filter className="h-5 w-5" />
-                    Filters
+                    {t('filters', language)}
                   </SheetTitle>
                 </SheetHeader>
                 <Separator className="my-4" />
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-3">Categories</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-3">{t('categories', language)}</h3>
                   <CategoryButton category={null} isMobile />
                   {categories.map((cat) => (
                     <CategoryButton key={cat.id} category={cat} isMobile />
@@ -276,14 +339,14 @@ function ProductsContent() {
         <div className="flex gap-8">
           {/* Sidebar - Desktop */}
           <aside className="hidden lg:block w-72 shrink-0">
-            <div className="sticky top-32 space-y-6">
+            <div className="sticky top-24 space-y-6">
               {/* Categories Card */}
               <div className="bg-white rounded-2xl p-5 shadow-sm border">
                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
                   <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Fish className="h-4 w-4 text-primary" />
                   </div>
-                  Categories
+                  {t('categories', language)}
                 </h3>
                 <div className="space-y-2">
                   <CategoryButton category={null} />
@@ -297,13 +360,13 @@ function ProductsContent() {
               <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-5 w-5" />
-                  <span className="font-semibold">Fresh Daily</span>
+                  <span className="font-semibold">{t('freshDaily', language)}</span>
                 </div>
                 <p className="text-sm text-white/90 mb-3">
-                  Our fish arrives fresh every morning from local fishermen
+                  {t('fishArrivesDaily', language)}
                 </p>
                 <div className="text-xs bg-white/20 rounded-lg px-3 py-2 text-center font-medium">
-                  Order before 10 PM for next day delivery
+                  {t('orderBefore10pm', language)}
                 </div>
               </div>
             </div>
@@ -311,32 +374,113 @@ function ProductsContent() {
 
           {/* Product Grid */}
           <div className="flex-1 min-w-0">
-            {/* Active Filters & Results Count */}
+            {/* Toolbar: Filters, Sort, View Toggle */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <div className="flex items-center gap-3">
+              {/* Left: Results count & active filters */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Mobile Filter Button */}
+                <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="lg:hidden gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filters
+                      {selectedCategory !== 'all' && (
+                        <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-primary text-white">1</Badge>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px]">
+                    <SheetHeader>
+                      <SheetTitle className="flex items-center gap-2">
+                        <Filter className="h-5 w-5" />
+                        Filters
+                      </SheetTitle>
+                    </SheetHeader>
+                    <Separator className="my-4" />
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">Categories</h3>
+                      <CategoryButton category={null} isMobile />
+                      {categories.map((cat) => (
+                        <CategoryButton key={cat.id} category={cat} isMobile />
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+
                 <p className="text-sm text-muted-foreground">
-                  Showing <span className="font-semibold text-foreground">{sortedProducts.length}</span> products
+                  {t('showing', language)} <span className="font-semibold text-foreground">{sortedProducts.length}</span> {t('productsText', language)}
                 </p>
                 {selectedCategory !== 'all' && (
                   <Badge
                     variant="secondary"
-                    className="gap-1.5 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer"
+                    className="gap-1.5 px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer text-xs"
                     onClick={() => setSelectedCategory('all')}
                   >
-                    {categories.find((c) => c.handle === selectedCategory)?.name}
+                    {language === 'ta' && categories.find((c) => c.handle === selectedCategory)?.metadata?.tamil_name
+                      ? String(categories.find((c) => c.handle === selectedCategory)?.metadata?.tamil_name)
+                      : categories.find((c) => c.handle === selectedCategory)?.name}
                     <X className="h-3 w-3" />
                   </Badge>
                 )}
                 {searchQuery && (
                   <Badge
                     variant="secondary"
-                    className="gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer"
-                    onClick={() => setSearchQuery('')}
+                    className="gap-1.5 px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer text-xs"
+                    onClick={clearSearch}
                   >
                     "{searchQuery}"
                     <X className="h-3 w-3" />
                   </Badge>
                 )}
+              </div>
+
+              {/* Right: Sort & View Toggle */}
+              <div className="flex items-center gap-2">
+                {/* Sort Dropdown */}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[140px] sm:w-[160px] h-9 text-sm">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <SelectValue placeholder="Sort" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popular">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Popular
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="price-low">Price: Low-High</SelectItem>
+                    <SelectItem value="price-high">Price: High-Low</SelectItem>
+                    <SelectItem value="newest">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Newest
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* View Mode Toggle */}
+                <div className="hidden sm:flex items-center gap-1 bg-muted rounded-full p-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-7 w-7 rounded-full transition-colors ${viewMode === 'grid' ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary hover:text-primary-foreground' : 'hover:bg-primary/10 text-muted-foreground'}`}
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <Grid3X3 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-7 w-7 rounded-full transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary hover:text-primary-foreground' : 'hover:bg-primary/10 text-muted-foreground'}`}
+                    onClick={() => setViewMode('list')}
+                  >
+                    <LayoutList className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -361,7 +505,7 @@ function ProductsContent() {
                 }
               >
                 {sortedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <FreshCatchCard key={product.id} product={product} view={viewMode} />
                 ))}
               </div>
             ) : (
@@ -369,20 +513,17 @@ function ProductsContent() {
                 <div className="h-24 w-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-6">
                   <Fish className="h-12 w-12 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                <h3 className="text-xl font-semibold mb-2">{t('noProductsFound', language)}</h3>
                 <p className="text-muted-foreground mb-6">
-                  Try adjusting your search or filter to find what you're looking for
+                  {t('adjustSearchFilter', language)}
                 </p>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('all');
-                  }}
+                  onClick={() => setSelectedCategory('all')}
                   className="gap-2"
                 >
                   <X className="h-4 w-4" />
-                  Clear all filters
+                  {t('clearAllFilters', language)}
                 </Button>
               </div>
             )}
@@ -396,12 +537,7 @@ function ProductsContent() {
 export default function ProductsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
-        <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 text-white py-12">
-          <div className="container mx-auto px-4">
-            <div className="h-10 w-48 bg-white/20 rounded animate-pulse" />
-          </div>
-        </div>
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

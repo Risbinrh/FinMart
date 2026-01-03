@@ -6,8 +6,11 @@ import { useEffect, useState } from 'react';
 import FreshCatchCard from '@/components/product/FreshCatchCard';
 import { medusa, Product } from '@/lib/medusa';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 export default function FeaturedProducts() {
+  const { language } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,20 +60,20 @@ export default function FeaturedProducts() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gradient">Today&apos;s Fresh Catch</h2>
-            <p className="text-base text-muted-foreground mt-1">Caught fresh this morning</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gradient">{t('todaysFreshCatch', language)}</h2>
+            <p className="text-base text-muted-foreground mt-1">{t('caughtFreshThisMorning', language)}</p>
           </div>
           <Link
             href="/products"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            View All
+            {t('viewAll', language)}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-          {products.slice(0, 4).map((product) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-5 gap-6">
+          {products.slice(0, 5).map((product) => (
             <FreshCatchCard key={product.id} product={product} />
           ))}
         </div>

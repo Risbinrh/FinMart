@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import FreshCatchCard from '@/components/product/FreshCatchCard';
 import { medusa, Product, ProductCategory } from '@/lib/medusa';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 interface CategoryProductGridProps {
     category: ProductCategory;
@@ -14,6 +16,7 @@ interface CategoryProductGridProps {
 export default function CategoryProductGrid({ category }: CategoryProductGridProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { language } = useLanguage();
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -43,7 +46,7 @@ export default function CategoryProductGrid({ category }: CategoryProductGridPro
                             <Skeleton className="h-4 w-32" />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                         {[1, 2, 3, 4].map((i) => (
                             <div key={i} className="space-y-3">
                                 <Skeleton className="height-48 rounded-xl" />
@@ -65,7 +68,11 @@ export default function CategoryProductGrid({ category }: CategoryProductGridPro
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-gradient">{category.name}</h2>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-gradient">
+                            {language === 'ta' && typeof category.metadata?.tamil_name === 'string'
+                                ? category.metadata.tamil_name
+                                : category.name}
+                        </h2>
                         {category.description && (
                             <p className="text-base text-muted-foreground mt-1 font-medium">{category.description}</p>
                         )}
@@ -74,12 +81,12 @@ export default function CategoryProductGrid({ category }: CategoryProductGridPro
                         href={`/products?category=${category.handle}`}
                         className="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary/80 transition-colors"
                     >
-                        View All
+                        {t('viewAll', language)}
                         <ChevronRight className="h-4 w-4" />
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                     {products.map((product) => (
                         <FreshCatchCard key={product.id} product={product} />
                     ))}
