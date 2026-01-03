@@ -187,7 +187,6 @@ export const translations = {
         total: 'Total',
         inclusiveTaxes: 'Inclusive of all taxes',
         proceedToCheckout: 'Proceed to Checkout',
-        secureCheckout: 'Secure Checkout',
         fastDelivery: 'Fast Delivery',
         bestSeller: 'Best Seller',
         fresh: 'Fresh',
@@ -249,7 +248,6 @@ export const translations = {
         totalAmount: 'Total Amount',
         smsConfirmation: 'SMS Confirmation Sent',
         orderDetailsSent: 'Order details sent to',
-        trackOrder: 'Track Order',
 
         // Checkout Page - Validation
         fillAllFields: 'Please fill in all required fields',
@@ -443,7 +441,6 @@ export const translations = {
         total: 'மொத்தம்',
         inclusiveTaxes: 'அனைத்து வரிகளும் உட்பட',
         proceedToCheckout: 'செக்அவுட்டுக்கு செல்லவும்',
-        secureCheckout: 'பாதுகாப்பான செக்அவுட்',
         fastDelivery: 'விரைவு டெலிவரி',
         bestSeller: 'சிறந்த விற்பனை',
         fresh: 'புதிய',
@@ -505,7 +502,6 @@ export const translations = {
         totalAmount: 'மொத்த தொகை',
         smsConfirmation: 'SMS உறுதிப்படுத்தல் அனுப்பப்பட்டது',
         orderDetailsSent: 'ஆர்டர் விவரங்கள் அனுப்பப்பட்டன',
-        trackOrder: 'ஆர்டரைக் கண்காணிக்கவும்',
 
         // Checkout Page - Validation
         fillAllFields: 'தயவுசெய்து அனைத்து தேவையான புலங்களையும் நிரப்பவும்',

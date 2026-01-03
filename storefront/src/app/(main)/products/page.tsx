@@ -20,10 +20,12 @@ import {
   Droplets,
   Sun,
   LayoutGrid,
-  Shrimp
+  Shrimp,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,6 +41,16 @@ function ProductsContent() {
   const categoryParam = searchParams.get('category');
   const searchQuery = searchParams.get('q') || '';
 
+  const setSearchQuery = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set('q', value);
+    } else {
+      params.delete('q');
+    }
+    router.push(`/products${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
   const clearSearch = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('q');
@@ -51,11 +63,8 @@ function ProductsContent() {
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
   const [sortBy, setSortBy] = useState('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-<<<<<<< HEAD
   const { language } = useLanguage();
-=======
   const [filterOpen, setFilterOpen] = useState(false);
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
 
   // Fetch categories
   useEffect(() => {
@@ -183,28 +192,18 @@ function ProductsContent() {
 
     return (
       <button
-<<<<<<< HEAD
-        onClick={() => setSelectedCategory(isAll ? 'all' : category!.handle)}
-=======
         onClick={() => handleCategorySelect(isAll ? 'all' : category!.handle)}
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
         className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-between group ${isSelected
           ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-md'
           : 'hover:bg-primary/5 text-gray-700'
           }`}
       >
         <span className="flex items-center gap-3">
-<<<<<<< HEAD
-          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${isSelected ? 'bg-white/20' : 'bg-primary/10'
-            }`}>
-            <Fish className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-primary'}`} />
-=======
           <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-white/20' : 'bg-primary/10 group-hover:bg-primary/20'
             }`}>
             <div className={isSelected ? 'text-white' : 'text-primary'}>
               {getCategoryIcon(isAll ? null : category.name)}
             </div>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
           </div>
           {isAll ? t('allCategories', language) : (language === 'ta' && typeof category?.metadata?.tamil_name === 'string' ? category.metadata.tamil_name : category?.name)}
         </span>
@@ -215,7 +214,6 @@ function ProductsContent() {
   };
 
   return (
-<<<<<<< HEAD
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background">
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 text-white">
@@ -338,10 +336,6 @@ function ProductsContent() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-=======
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-4">
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
         <div className="flex gap-8">
           {/* Sidebar - Desktop */}
           <aside className="hidden lg:block w-72 shrink-0">
@@ -414,11 +408,7 @@ function ProductsContent() {
                 </Sheet>
 
                 <p className="text-sm text-muted-foreground">
-<<<<<<< HEAD
                   {t('showing', language)} <span className="font-semibold text-foreground">{sortedProducts.length}</span> {t('productsText', language)}
-=======
-                  <span className="font-semibold text-foreground">{sortedProducts.length}</span> products
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
                 </p>
                 {selectedCategory !== 'all' && (
                   <Badge
@@ -525,11 +515,7 @@ function ProductsContent() {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{t('noProductsFound', language)}</h3>
                 <p className="text-muted-foreground mb-6">
-<<<<<<< HEAD
                   {t('adjustSearchFilter', language)}
-=======
-                  Try selecting a different category
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
                 </p>
                 <Button
                   variant="outline"
@@ -537,11 +523,7 @@ function ProductsContent() {
                   className="gap-2"
                 >
                   <X className="h-4 w-4" />
-<<<<<<< HEAD
                   {t('clearAllFilters', language)}
-=======
-                  Clear filters
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
                 </Button>
               </div>
             )}

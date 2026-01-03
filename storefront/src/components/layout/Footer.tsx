@@ -2,32 +2,8 @@
 
 import Link from 'next/link';
 import { Fish, Phone, Mail, MapPin, Facebook, Instagram, Twitter } from 'lucide-react';
-<<<<<<< HEAD
 import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
-=======
-
-const footerLinks = {
-  shop: [
-    { name: 'All Products', href: '/products' },
-    { name: 'Sea Fish', href: '/products?category=sea-fish-premium' },
-    { name: 'Prawns', href: '/products?category=prawns' },
-    { name: 'Crabs', href: '/products?category=crabs' },
-    { name: 'River Fish', href: '/products?category=river-fish' },
-    { name: 'Recipes', href: '/recipes' },
-  ],
-  account: [
-    { name: 'My Account', href: '/profile' },
-    { name: 'My Orders', href: '/orders' },
-    { name: 'My Addresses', href: '/profile/addresses' },
-    { name: 'Cart', href: '/cart' },
-  ],
-  info: [
-    { name: 'Delivery Zones', href: '/zone-demo' },
-    { name: 'Track Order', href: '/orders' },
-  ],
-};
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
 
 export default function Footer() {
   const { language } = useLanguage();
@@ -108,15 +84,11 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Account Links */}
+          {/* Support Links */}
           <div>
-<<<<<<< HEAD
             <h3 className="text-white font-semibold mb-4">{t('support', language)}</h3>
-=======
-            <h3 className="text-white font-semibold mb-4">My Account</h3>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
             <ul className="space-y-2 text-sm">
-              {footerLinks.account.map((link) => (
+              {footerLinks.support.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-primary transition-colors">
                     {link.name}
@@ -126,15 +98,11 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Info Links */}
+          {/* Company Links */}
           <div>
-<<<<<<< HEAD
             <h3 className="text-white font-semibold mb-4">{t('company', language)}</h3>
-=======
-            <h3 className="text-white font-semibold mb-4">Information</h3>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
             <ul className="space-y-2 text-sm">
-              {footerLinks.info.map((link) => (
+              {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link href={link.href} className="hover:text-primary transition-colors">
                     {link.name}
@@ -161,7 +129,6 @@ export default function Footer() {
       <div className="border-t border-slate-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-<<<<<<< HEAD
             <p>&copy; 2024 FreshCatch. {t('allRightsReserved', language)}</p>
             <div className="flex gap-6">
               {footerLinks.legal.map((link) => (
@@ -170,10 +137,6 @@ export default function Footer() {
                 </Link>
               ))}
             </div>
-=======
-            <p>&copy; 2025 FreshCatch. All rights reserved.</p>
-            <p className="text-slate-500">Made with ❤️ in Chennai, Tamil Nadu</p>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
           </div>
         </div>
       </div>

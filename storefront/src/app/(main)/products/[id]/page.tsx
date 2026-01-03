@@ -36,11 +36,9 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { medusa, Product, ProductVariant, formatPrice, getVariantPrice } from '@/lib/medusa';
 import { useCart } from '@/context/CartContext';
-<<<<<<< HEAD
 import ProductCard from '@/components/product/ProductCard';
 import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
-=======
 import FreshCatchCard from '@/components/product/FreshCatchCard';
 
 // Fish handle to recipe mapping
@@ -109,7 +107,6 @@ const fishRecipeMap: Record<string, { id: string; title: string; tamilTitle: str
     { id: '17', title: 'Dried Anchovy Fry', tamilTitle: 'நெத்திலி கருவாடு வறுவல்', image: 'https://img.youtube.com/vi/62HGi9-qKDI/maxresdefault.jpg', videoId: '62HGi9-qKDI', duration: 20 },
   ],
 };
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -125,11 +122,8 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
-<<<<<<< HEAD
   const { language } = useLanguage();
-=======
   const [videoModal, setVideoModal] = useState<{ isOpen: boolean; videoId: string; title: string }>({ isOpen: false, videoId: '', title: '' });
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -362,17 +356,11 @@ export default function ProductDetailPage() {
 
             {/* Title */}
             <div>
-<<<<<<< HEAD
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
                 {language === 'ta' && tamilName ? tamilName : product.title}
               </h1>
               {language === 'en' && tamilName && (
                 <p className="text-xl text-muted-foreground mt-1">{tamilName}</p>
-=======
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900">{product.title}</h1>
-              {tamilName && (
-                <p className="text-base text-muted-foreground mt-1">{tamilName}</p>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
               )}
             </div>
 
@@ -382,31 +370,18 @@ export default function ProductDetailPage() {
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                 <span className="font-bold text-amber-700 text-sm">{rating}</span>
               </div>
-<<<<<<< HEAD
               <span className="text-muted-foreground">
                 {reviewCount} {language === 'ta' ? 'விமர்சனங்கள்' : 'reviews'}
               </span>
               <Separator orientation="vertical" className="h-5" />
               <span className="text-green-600 font-medium">500+ {language === 'ta' ? 'விற்பனை' : 'sold'}</span>
-=======
-              <span className="text-sm text-muted-foreground">
-                {reviewCount} reviews
-              </span>
-              <Separator orientation="vertical" className="h-5" />
-              <span className="text-sm text-green-600 font-medium">500+ sold</span>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
             </div>
 
             {/* Price */}
             <div className="bg-gradient-to-r from-primary/10 to-transparent rounded-lg p-3">
               <div className="flex items-baseline gap-3">
-<<<<<<< HEAD
                 <span className="text-4xl font-bold text-primary">{formatPrice(currentPrice)}</span>
                 <span className="text-lg text-muted-foreground">{t('perKgSlash', language)}</span>
-=======
-                <span className="text-2xl font-bold text-primary">{formatPrice(currentPrice)}</span>
-                <span className="text-sm text-muted-foreground">/kg</span>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
                 {originalPrice && currentPrice < originalPrice && (
                   <span className="text-base text-gray-400 line-through">
                     {formatPrice(originalPrice)}
@@ -414,21 +389,15 @@ export default function ProductDetailPage() {
                 )}
               </div>
               {discountPercent > 0 && (
-<<<<<<< HEAD
                 <p className="text-green-600 font-medium mt-1">
                   {language === 'ta'
                     ? `நீங்கள் ${formatPrice(originalPrice - currentPrice)} சேமிக்கிறீர்கள் (${discountPercent}% தள்ளுபடி)`
                     : `You save ${formatPrice(originalPrice - currentPrice)} (${discountPercent}% off)`
                   }
-=======
-                <p className="text-xs text-green-600 font-medium mt-1">
-                  You save {formatPrice(originalPrice - currentPrice)} ({discountPercent}% off)
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
                 </p>
               )}
             </div>
 
-<<<<<<< HEAD
             {/* Variant Selection */}
             {product.variants && product.variants.length > 1 && (
               <div>
@@ -478,8 +447,6 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-=======
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
             {/* Quantity */}
             <div>
               <h3 className="font-bold text-lg mb-3">{language === 'ta' ? 'அளவு' : 'Quantity'}</h3>
@@ -823,11 +790,7 @@ export default function ProductDetailPage() {
         {relatedProducts.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center justify-between mb-6">
-<<<<<<< HEAD
               <h2 className="text-2xl md:text-3xl font-bold">{language === 'ta' ? 'நீங்கள் விரும்பலாம்' : 'You May Also Like'}</h2>
-=======
-              <h2 className="text-2xl md:text-3xl font-bold">Similar Fishes You May Like</h2>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
               <Link href="/products">
                 <Button variant="ghost" className="gap-1">
                   {t('viewAll', language)}

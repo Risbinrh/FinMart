@@ -14,22 +14,12 @@ import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
 import LanguageDropdown from '@/components/LanguageDropdown';
 
-
-<<<<<<< HEAD
-=======
-const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'Products', href: '/products' },
-  { name: 'About', href: '/about' },
-];
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
-
 export default function Header() {
   const router = useRouter();
   const { itemCount } = useCart();
   const { isAuthenticated, customer } = useAuth();
-<<<<<<< HEAD
   const { language } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const navigation = [
     { name: t('home', language), href: '/' },
@@ -37,9 +27,6 @@ export default function Header() {
     { name: t('recipes', language), href: '/recipes' },
     { name: t('about', language), href: '/about' },
   ];
-=======
-  const [location] = useState('Chennai, Tamil Nadu');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +34,6 @@ export default function Header() {
       router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -80,13 +66,8 @@ export default function Header() {
               <Fish className="h-6 w-6 text-white" />
             </div>
             <div className="hidden sm:block">
-<<<<<<< HEAD
               <h1 className="text-xl font-bold text-primary">FreshCatch</h1>
               <p className="text-xs text-muted-foreground -mt-1">{t('freshFishDelivery', language)}</p>
-=======
-              <h1 className="text-xl font-bold text-primary">Meen Box</h1>
-              <p className="text-xs text-muted-foreground -mt-1">Fresh Fish Delivery</p>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
             </div>
           </Link>
 

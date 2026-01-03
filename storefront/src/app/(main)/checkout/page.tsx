@@ -435,13 +435,8 @@ export default function CheckoutPage() {
 
                 {/* Total */}
                 <div className="flex justify-between items-center py-2">
-<<<<<<< HEAD
                   <span className="text-lg font-semibold">{t('totalAmount', language)}</span>
-                  <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
-=======
-                  <span className="text-lg font-semibold">Total Amount</span>
                   <span className="text-2xl font-bold text-primary">{formatPrice(orderTotal)}</span>
->>>>>>> 5494701970030cda6266ceac303270eca30562a1
                 </div>
               </CardContent>
             </Card>
