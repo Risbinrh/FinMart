@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
 
+
+
 export default function HeroBanner() {
   const { language } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -58,7 +60,7 @@ export default function HeroBanner() {
   return (
     <section className="relative w-full bg-white overflow-hidden">
       {/* Full Width Banner - Small Height */}
-      <div className="relative h-[150px] sm:h-[180px] lg:h-[220px] container mx-auto overflow-hidden rounded-xl">
+      <div className="relative h-[200px] sm:h-[250px] lg:h-[300px] w-full">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
@@ -67,11 +69,11 @@ export default function HeroBanner() {
           >
             {/* Background Image - Object fit cover to fill the wide area */}
             <div
-              className="absolute inset-0 bg-contain bg-center bg-no-repeat rounded-xl"
+              className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url(${slide.image})` }}
             />
             {/* Soft Gradient Overlay for text readability without darkening too much */}
-            <div className={`rounded-xl absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
+            <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
 
             {/* Content positioned to the left */}
             <div className="container mx-auto px-4 h-full relative">

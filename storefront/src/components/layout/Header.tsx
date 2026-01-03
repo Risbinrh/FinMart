@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, User, MapPin, Menu, Fish } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +13,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/lib/translations';
 import LanguageDropdown from '@/components/LanguageDropdown';
 
+
+
 export default function Header() {
-  const router = useRouter();
   const { itemCount } = useCart();
   const { isAuthenticated, customer } = useAuth();
   const { language } = useLanguage();
@@ -27,13 +27,6 @@ export default function Header() {
     { name: t('recipes', language), href: '/recipes' },
     { name: t('about', language), href: '/about' },
   ];
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -72,18 +65,16 @@ export default function Header() {
           </Link>
 
           {/* Search - Desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl">
+          <div className="hidden md:flex flex-1 max-w-xl">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder={t('searchPlaceholder', language)}
                 className="w-full pl-10 pr-4 bg-muted/50"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-          </form>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6">
@@ -101,13 +92,13 @@ export default function Header() {
           {/* Actions */}
           <div className="flex items-center gap-2">
             {/* Search - Mobile */}
-            <Button variant="ghost" size="icon" className="md:hidden rounded-full">
+            <Button variant="ghost" size="icon" className="md:hidden">
               <Search className="h-5 w-5" />
             </Button>
 
             {/* User */}
             <Link href={isAuthenticated ? '/profile' : '/login'}>
-              <Button variant="ghost" size="icon" className="relative rounded-full">
+              <Button variant="ghost" size="icon" className="relative">
                 <User className="h-5 w-5" />
                 {isAuthenticated && (
                   <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500" />
@@ -117,10 +108,10 @@ export default function Header() {
 
             {/* Cart */}
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative rounded-full">
+              <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground">
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground">
                     {itemCount > 99 ? '99+' : itemCount}
                   </Badge>
                 )}
@@ -136,16 +127,14 @@ export default function Header() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px]">
                 <div className="flex flex-col gap-6 mt-6">
-                  <form onSubmit={handleSearch} className="relative">
+                  <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="search"
                       placeholder={t('search', language)}
                       className="w-full pl-10"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                  </form>
+                  </div>
                   <nav className="flex flex-col gap-4">
                     {navigation.map((item) => (
                       <Link

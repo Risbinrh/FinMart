@@ -68,7 +68,6 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [paymentId, setPaymentId] = useState('');
-  const [orderTotal, setOrderTotal] = useState(0);
   const [address, setAddress] = useState({
     first_name: '',
     last_name: '',
@@ -205,9 +204,6 @@ export default function CheckoutPage() {
   };
 
   const completeOrder = async (razorpayPaymentId?: string) => {
-    // Save the total before clearing cart
-    setOrderTotal(total);
-
     try {
       if (cart?.id) {
         const result = await medusa.completeCart(cart.id);
@@ -436,7 +432,7 @@ export default function CheckoutPage() {
                 {/* Total */}
                 <div className="flex justify-between items-center py-2">
                   <span className="text-lg font-semibold">{t('totalAmount', language)}</span>
-                  <span className="text-2xl font-bold text-primary">{formatPrice(orderTotal)}</span>
+                  <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
                 </div>
               </CardContent>
             </Card>
