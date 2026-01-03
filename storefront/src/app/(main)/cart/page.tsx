@@ -84,7 +84,8 @@ export default function CartPage() {
     setCouponCode('');
   };
 
-  const subtotal = cart?.subtotal || 0;
+  // Calculate subtotal from items if cart.subtotal is undefined
+  const subtotal = cart?.subtotal || cart?.items?.reduce((sum, item) => sum + (item.total || (item.unit_price || 0) * item.quantity), 0) || 0;
   const deliveryCharge = subtotal >= 30000 ? 0 : 3000;
   const total = subtotal - discount + deliveryCharge;
   const amountForFreeDelivery = 30000 - subtotal;
@@ -150,7 +151,7 @@ export default function CartPage() {
               <div className="flex flex-wrap justify-center gap-2">
                 {['Sea Fish', 'Prawns', 'Crabs', 'River Fish'].map((cat) => (
                   <Link key={cat} href={`/products?category=${cat.toLowerCase().replace(' ', '-')}`}>
-                    <Badge variant="secondary" className="px-4 py-2 cursor-pointer hover:bg-primary hover:text-white transition-colors">
+                    <Badge className="px-4 py-2 cursor-pointer transition-colors">
                       {cat}
                     </Badge>
                   </Link>
@@ -300,10 +301,10 @@ export default function CartPage() {
                         {/* Price */}
                         <div className="text-right">
                           <p className="text-xl font-bold text-primary">
-                            {formatPrice(item.total)}
+                            {formatPrice(item.total || (item.unit_price || 0) * item.quantity)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatPrice(item.unit_price)} × {item.quantity}
+                            {formatPrice(item.unit_price || 0)} × {item.quantity}
                           </p>
                         </div>
                       </div>

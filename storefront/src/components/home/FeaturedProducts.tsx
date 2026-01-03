@@ -72,8 +72,8 @@ export default function FeaturedProducts() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-          {products.slice(0, 4).map((product) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-5 gap-6">
+          {products.slice(0, 5).map((product) => (
             <FreshCatchCard key={product.id} product={product} />
           ))}
         </div>

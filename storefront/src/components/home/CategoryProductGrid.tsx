@@ -46,7 +46,7 @@ export default function CategoryProductGrid({ category }: CategoryProductGridPro
                             <Skeleton className="h-4 w-32" />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                         {[1, 2, 3, 4].map((i) => (
                             <div key={i} className="space-y-3">
                                 <Skeleton className="height-48 rounded-xl" />
@@ -86,7 +86,7 @@ export default function CategoryProductGrid({ category }: CategoryProductGridPro
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                     {products.map((product) => (
                         <FreshCatchCard key={product.id} product={product} />
                     ))}

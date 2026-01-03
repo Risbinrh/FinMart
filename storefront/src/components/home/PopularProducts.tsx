@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import ProductCard from '@/components/product/ProductCard';
+import FreshCatchCard from '@/components/product/FreshCatchCard';
 import { medusa, Product } from '@/lib/medusa';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/context/LanguageContext';
@@ -18,7 +18,7 @@ export default function PopularProducts() {
     const fetchProducts = async () => {
       try {
         // Fetch products with offset to get different products than FeaturedProducts
-        const { products } = await medusa.getProducts({ limit: 4, offset: 5 });
+        const { products } = await medusa.getProducts({ limit: 5, offset: 5 });
         setProducts(products);
       } catch (error) {
         console.error('Failed to fetch products:', error);
@@ -73,9 +73,9 @@ export default function PopularProducts() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <FreshCatchCard key={product.id} product={product} />
           ))}
         </div>
       </div>
