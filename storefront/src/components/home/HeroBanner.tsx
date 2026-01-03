@@ -4,42 +4,47 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Truck, Clock, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
-const slides = [
-  {
-    id: 1,
-    title: 'Premium Sea Fish',
-    subtitle: 'CATCH OF THE DAY',
-    description: 'Experience the finest Emperor fish (Eari), delivered straight from the boat.',
-    image: '/images/carousel/emperor_fish_creative.png',
-    cta: 'Shop Sea Fish',
-    href: '/products',
-    gradient: 'from-slate-900/40 via-slate-900/20 to-transparent',
-  },
-  {
-    id: 2,
-    title: 'Fresh Prawns Daily',
-    subtitle: 'PREMIUM SELECTION',
-    description: 'Premium tiger prawns delivered before sunrise to ensure maximum freshness.',
-    image: '/images/carousel/tiger_prawns_creative.png',
-    cta: 'Order Prawns',
-    href: '/products?category=prawns',
-    gradient: 'from-teal-900/40 via-teal-900/20 to-transparent',
-  },
-  {
-    id: 3,
-    title: 'Black Pomfret',
-    subtitle: 'CUSTOMER FAVORITE',
-    description: 'Discover the rich taste of fresh Black Pomfret, perfect for frying or curry.',
-    image: '/images/carousel/black_pomfret_creative.png',
-    cta: 'Shop Pomfret',
-    href: '/products',
-    gradient: 'from-orange-900/40 via-orange-900/20 to-transparent',
-  },
-];
+
 
 export default function HeroBanner() {
+  const { language } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    {
+      id: 1,
+      title: t('premiumSeaFish', language),
+      subtitle: t('catchOfTheDay', language),
+      description: t('emperorFishDesc', language),
+      image: '/images/carousel/emperor_fish_creative.png',
+      cta: t('shopSeaFish', language),
+      href: '/products',
+      gradient: 'from-slate-900/40 via-slate-900/20 to-transparent',
+    },
+    {
+      id: 2,
+      title: t('freshPrawnsDaily', language),
+      subtitle: t('premiumSelection', language),
+      description: t('tigerPrawnsDesc', language),
+      image: '/images/carousel/tiger_prawns_creative.png',
+      cta: t('orderPrawns', language),
+      href: '/products?category=prawns',
+      gradient: 'from-teal-900/40 via-teal-900/20 to-transparent',
+    },
+    {
+      id: 3,
+      title: t('blackPomfret', language),
+      subtitle: t('customerFavorite', language),
+      description: t('blackPomfretDesc', language),
+      image: '/images/carousel/black_pomfret_creative.png',
+      cta: t('shopPomfret', language),
+      href: '/products',
+      gradient: 'from-orange-900/40 via-orange-900/20 to-transparent',
+    },
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -120,8 +125,8 @@ export default function HeroBanner() {
               key={index}
               onClick={() => goToSlide(index)}
               className={`transition-all duration-300 ${index === currentSlide
-                  ? 'w-6 h-1.5 bg-white rounded-full'
-                  : 'w-1.5 h-1.5 bg-white/40 rounded-full hover:bg-white/60'
+                ? 'w-6 h-1.5 bg-white rounded-full'
+                : 'w-1.5 h-1.5 bg-white/40 rounded-full hover:bg-white/60'
                 }`}
             />
           ))}

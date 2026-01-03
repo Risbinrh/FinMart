@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Product, formatPrice, getVariantPrice } from '@/lib/medusa';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 interface FreshCatchCardProps {
     product: Product;
@@ -17,6 +19,7 @@ interface FreshCatchCardProps {
 export default function FreshCatchCard({ product }: FreshCatchCardProps) {
     const { addToCart, isLoading: cartLoading } = useCart();
     const [isAdding, setIsAdding] = useState(false);
+    const { language } = useLanguage();
 
     // Get first variant for default price display
     const defaultVariant = product.variants?.[0];
@@ -28,7 +31,7 @@ export default function FreshCatchCard({ product }: FreshCatchCardProps) {
 
     // Missing contents integration
     const tamilName = product.subtitle || (product.metadata?.tamil_name as string) || '';
-    const freshness = (product.metadata?.freshness as string) || 'Caught fresh';
+    const freshness = (product.metadata?.freshness as string) || t('caughtFresh', language);
     const rating = (product.metadata?.rating as number) || 4.5;
     const reviewCount = (product.metadata?.review_count as number) || 0;
 
@@ -70,16 +73,11 @@ export default function FreshCatchCard({ product }: FreshCatchCardProps) {
 
             <CardContent className="p-2.5 sm:p-3.5 pt-1.5 flex flex-col">
                 <Link href={`/products/${product.handle}`} className="flex flex-col">
-                    {/* Main Title & Tamil Name - Condensed */}
+                    {/* Main Title - Language Switched */}
                     <div className="mb-1.5">
                         <h3 className="font-bold text-sm sm:text-base leading-tight text-[#333333] group-hover:text-primary transition-colors line-clamp-1">
-                            {product.title}
+                            {language === 'ta' && tamilName ? tamilName : product.title}
                         </h3>
-                        {tamilName && (
-                            <p className="text-[10px] sm:text-[11px] text-muted-foreground italic truncate">
-                                {tamilName}
-                            </p>
-                        )}
                     </div>
 
                     {/* Meta Row - Combined Rating & Freshness */}
@@ -107,7 +105,7 @@ export default function FreshCatchCard({ product }: FreshCatchCardProps) {
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-tight -mt-0.5">Per KG</span>
+                            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-tight -mt-0.5">{t('perKg', language)}</span>
                         </div>
 
                         <Button
@@ -121,7 +119,7 @@ export default function FreshCatchCard({ product }: FreshCatchCardProps) {
                             ) : (
                                 <>
                                     <ShoppingBasket className="h-3.5 w-3.5 stroke-[2.5px]" />
-                                    <span className="text-[10px] uppercase tracking-wider">ADD</span>
+                                    <span className="text-[10px] uppercase tracking-wider">{t('add', language)}</span>
                                 </>
                             )}
                         </Button>

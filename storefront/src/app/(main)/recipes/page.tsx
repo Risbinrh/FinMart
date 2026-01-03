@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 const recipes = [
   {
@@ -145,6 +147,7 @@ export default function RecipesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
+  const { language } = useLanguage();
 
   const filteredRecipes = recipes.filter((recipe) => {
     const matchesSearch =
@@ -163,17 +166,17 @@ export default function RecipesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-2">
             <ChefHat className="h-8 w-8" />
-            <h1 className="text-2xl font-bold">Fish Recipes</h1>
+            <h1 className="text-2xl font-bold">{t('fishRecipes', language)}</h1>
           </div>
           <p className="text-white/80">
-            Discover delicious ways to cook your fresh seafood
+            {t('discoverDelicious', language)}
           </p>
 
           {/* Search */}
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Search recipes by name or fish type..."
+              placeholder={t('searchRecipesPlaceholder', language)}
               className="pl-10 bg-white text-foreground"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -186,7 +189,7 @@ export default function RecipesPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-6">
           <div>
-            <p className="text-sm text-muted-foreground mb-2">Category</p>
+            <p className="text-sm text-muted-foreground mb-2">{t('category', language)}</p>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (
                 <Button
@@ -195,13 +198,13 @@ export default function RecipesPage() {
                   size="sm"
                   onClick={() => setSelectedCategory(cat)}
                 >
-                  {cat}
+                  {cat === 'All' ? t('all', language) : cat === 'Main Course' ? t('mainCourse', language) : cat === 'Curry' ? t('curry', language) : cat === 'Starter' ? t('starter', language) : t('soup', language)}
                 </Button>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground mb-2">Difficulty</p>
+            <p className="text-sm text-muted-foreground mb-2">{t('difficulty', language)}</p>
             <div className="flex flex-wrap gap-2">
               {difficulties.map((diff) => (
                 <Button
@@ -210,7 +213,7 @@ export default function RecipesPage() {
                   size="sm"
                   onClick={() => setSelectedDifficulty(diff)}
                 >
-                  {diff}
+                  {diff === 'All' ? t('all', language) : diff === 'Easy' ? t('recipeEasy', language) : diff === 'Medium' ? t('recipeMedium', language) : t('recipeHard', language)}
                 </Button>
               ))}
             </div>
@@ -219,7 +222,7 @@ export default function RecipesPage() {
 
         {/* Results Count */}
         <p className="text-sm text-muted-foreground mb-4">
-          {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
+          {filteredRecipes.length} {filteredRecipes.length !== 1 ? t('recipesFound', language) : t('recipeFound', language)}
         </p>
 
         {/* Recipe Grid */}
@@ -240,26 +243,25 @@ export default function RecipesPage() {
                     </div>
                   )}
                   <Badge className={`absolute top-2 left-2 ${difficultyColors[recipe.difficulty]} text-white`}>
-                    {recipe.difficulty}
+                    {recipe.difficulty === 'Easy' ? t('recipeEasy', language) : recipe.difficulty === 'Medium' ? t('recipeMedium', language) : t('recipeHard', language)}
                   </Badge>
                   {recipe.isVideo && (
                     <Badge className="absolute top-2 right-2 bg-red-600 text-white">
-                      Video
+                      {t('video', language)}
                     </Badge>
                   )}
                 </div>
                 <CardContent className="p-4">
-                  <h3 className="font-semibold line-clamp-1">{recipe.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{recipe.tamilTitle}</p>
+                  <h3 className="font-semibold line-clamp-1">{language === 'ta' ? recipe.tamilTitle : recipe.title}</h3>
 
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      <span>{recipe.duration} min</span>
+                      <span>{recipe.duration} {t('min', language)}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      <span>{recipe.servings} servings</span>
+                      <span>{recipe.servings} {t('recipeServings', language)}</span>
                     </div>
                   </div>
 
@@ -267,7 +269,7 @@ export default function RecipesPage() {
                     <Badge variant="secondary">{recipe.fish}</Badge>
                     <div className={`flex items-center gap-1 text-sm ${spiceColors[recipe.spiceLevel]}`}>
                       <Flame className="h-4 w-4" />
-                      <span>{recipe.spiceLevel}</span>
+                      <span>{recipe.spiceLevel === 'Mild' ? t('mild', language) : recipe.spiceLevel === 'Medium' ? t('recipeMedium', language) : recipe.spiceLevel === 'Spicy' ? t('spicy', language) : t('hot', language)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -279,12 +281,12 @@ export default function RecipesPage() {
         {filteredRecipes.length === 0 && (
           <div className="text-center py-12">
             <ChefHat className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No recipes found</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('noRecipesFound', language)}</h2>
             <p className="text-muted-foreground mb-4">
-              Try adjusting your search or filters
+              {t('adjustFilters', language)}
             </p>
             <Button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); setSelectedDifficulty('All'); }}>
-              Clear Filters
+              {t('clearFilters', language)}
             </Button>
           </div>
         )}

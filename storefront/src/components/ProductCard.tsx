@@ -4,6 +4,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 import { Heart, ShoppingCart, Eye, Star } from "lucide-react"
+import { useLanguage } from '@/context/LanguageContext'
+import { t } from '@/lib/translations'
 
 interface ProductCardProps {
     id: string
@@ -32,6 +34,7 @@ export default function ProductCard({
     onAddToCart,
     onQuickView,
 }: ProductCardProps) {
+    const { language } = useLanguage()
     const [isWishlisted, setIsWishlisted] = useState(false)
     const [imageLoaded, setImageLoaded] = useState(false)
 
@@ -56,7 +59,7 @@ export default function ProductCard({
             {/* Discount Badge */}
             {discount && (
                 <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-semibold shadow-md">
-                    {discount}% OFF
+                    {discount}% {t('off', language)}
                 </div>
             )}
 
@@ -85,7 +88,7 @@ export default function ProductCard({
                         className="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
                     >
                         <Eye className="w-4 h-4" />
-                        Quick View
+                        {t('quickView', language)}
                     </button>
                 </div>
             </Link>
@@ -99,8 +102,8 @@ export default function ProductCard({
                             <Star
                                 key={i}
                                 className={`w-4 h-4 ${i < Math.floor(rating)
-                                        ? "fill-yellow-400 text-yellow-400"
-                                        : "text-gray-300"
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
                                     }`}
                             />
                         ))}
@@ -126,7 +129,7 @@ export default function ProductCard({
                 <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${inStock ? "bg-green-500" : "bg-red-500"}`} />
                     <span className={`text-xs font-medium ${inStock ? "text-green-600" : "text-red-600"}`}>
-                        {inStock ? "In Stock" : "Out of Stock"}
+                        {inStock ? t('inStock', language) : t('outOfStock', language)}
                     </span>
                 </div>
 
@@ -147,7 +150,7 @@ export default function ProductCard({
                     className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-lg font-medium flex items-center justify-center gap-2 transition-all hover:bg-primary/90 hover:shadow-md disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed group/btn"
                 >
                     <ShoppingCart className="w-4 h-4 transition-transform group-hover/btn:scale-110" />
-                    {inStock ? "Add to Cart" : "Out of Stock"}
+                    {inStock ? t('addToCart', language) : t('outOfStock', language)}
                 </button>
             </div>
         </div>

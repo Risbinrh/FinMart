@@ -37,6 +37,8 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { medusa, formatPrice } from '@/lib/medusa';
 import { useRazorpay } from '@/hooks/useRazorpay';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 const deliverySlots = [
   { id: 'sunrise', name: 'Sunrise Fresh', time: '6:00 AM - 8:00 AM', price: 0, icon: '🌅', popular: false },
@@ -55,6 +57,7 @@ export default function CheckoutPage() {
   const { cart, refreshCart } = useCart();
   const { customer, isAuthenticated, isLoading: authLoading } = useAuth();
   const { processPayment, isLoading: paymentLoading } = useRazorpay();
+  const { language } = useLanguage();
 
   const [step, setStep] = useState<'checkout' | 'processing' | 'success'>('checkout');
   const [selectedSlot, setSelectedSlot] = useState('morning');
@@ -143,7 +146,7 @@ export default function CheckoutPage() {
             <div className="h-16 w-16 mx-auto rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
             <Package className="h-6 w-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="mt-4 text-muted-foreground">Loading checkout...</p>
+          <p className="mt-4 text-muted-foreground">{t('loadingCheckout', language)}</p>
         </div>
       </div>
     );
@@ -155,7 +158,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Redirecting to login...</p>
+          <p className="text-muted-foreground">{t('redirectingToLogin', language)}</p>
         </div>
       </div>
     );
@@ -177,7 +180,7 @@ export default function CheckoutPage() {
               <Link href="/products">
                 <Button size="lg" className="gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Explore Products
+                  {t('exploreProducts', language)}
                 </Button>
               </Link>
             </div>
@@ -319,11 +322,11 @@ export default function CheckoutPage() {
               </div>
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Processing Your Order</h2>
-          <p className="text-muted-foreground mb-6">Please wait while we confirm your order...</p>
+          <h2 className="text-2xl font-bold mb-2">{t('processingOrder', language)}</h2>
+          <p className="text-muted-foreground mb-6">{t('pleaseWait', language)}</p>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 text-green-600" />
-            <span>Secure checkout powered by Razorpay</span>
+            <span>{t('secureCheckoutBy', language)}</span>
           </div>
         </div>
       </div>
@@ -348,9 +351,9 @@ export default function CheckoutPage() {
                   <span className="text-3xl animate-bounce inline-block">🎉</span>
                 </div>
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-green-700 mb-2">Order Confirmed!</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-green-700 mb-2">{t('orderConfirmed', language)}</h1>
               <p className="text-muted-foreground">
-                Your fresh catch is being prepared with love 🐟
+                {t('freshCatchPrepared', language)}
               </p>
             </div>
 
@@ -359,7 +362,7 @@ export default function CheckoutPage() {
               <div className="bg-gradient-to-r from-green-600 to-green-500 text-white p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-100 text-sm">Order ID</p>
+                    <p className="text-green-100 text-sm">{t('orderId', language)}</p>
                     <p className="font-bold text-xl">#{orderId}</p>
                   </div>
                   <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -375,9 +378,9 @@ export default function CheckoutPage() {
                     <Truck className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-blue-900">Delivery Scheduled</p>
+                    <p className="font-semibold text-blue-900">{t('deliveryScheduled', language)}</p>
                     <p className="text-blue-700">
-                      {selectedDate === 'today' ? 'Today' : 'Tomorrow'}, {selectedSlotInfo?.time}
+                      {selectedDate === 'today' ? t('today', language) : t('tomorrow', language)}, {selectedSlotInfo?.time}
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <span className="text-xl">{selectedSlotInfo?.icon}</span>
@@ -392,7 +395,7 @@ export default function CheckoutPage() {
                     <MapPin className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold">Delivery Address</p>
+                    <p className="font-semibold">{t('deliveryAddress', language)}</p>
                     <p className="text-muted-foreground text-sm">
                       {address.first_name} {address.last_name}
                     </p>
@@ -411,11 +414,11 @@ export default function CheckoutPage() {
                     )}
                   </div>
                   <div>
-                    <p className="font-semibold">Payment</p>
+                    <p className="font-semibold">{t('payment', language)}</p>
                     <p className="text-muted-foreground text-sm">
                       {paymentMethods.find(p => p.id === selectedPayment)?.name}
                       {selectedPayment !== 'cod' && (
-                        <Badge variant="secondary" className="ml-2 text-green-700 bg-green-100">Paid</Badge>
+                        <Badge variant="secondary" className="ml-2 text-green-700 bg-green-100">{t('paid', language)}</Badge>
                       )}
                     </p>
                     {paymentId && (
@@ -428,7 +431,7 @@ export default function CheckoutPage() {
 
                 {/* Total */}
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-lg font-semibold">Total Amount</span>
+                  <span className="text-lg font-semibold">{t('totalAmount', language)}</span>
                   <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
                 </div>
               </CardContent>
@@ -441,8 +444,8 @@ export default function CheckoutPage() {
                   <Phone className="h-5 w-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-amber-900">SMS Confirmation Sent</p>
-                  <p className="text-sm text-amber-700">Order details sent to {address.phone}</p>
+                  <p className="font-medium text-amber-900">{t('smsConfirmation', language)}</p>
+                  <p className="text-sm text-amber-700">{t('orderDetailsSent', language)} {address.phone}</p>
                 </div>
               </div>
             </div>
@@ -452,13 +455,13 @@ export default function CheckoutPage() {
               <Link href="/orders" className="flex-1">
                 <Button variant="outline" className="w-full h-12 gap-2" size="lg">
                   <Package className="h-5 w-5" />
-                  Track Order
+                  {t('trackOrder', language)}
                 </Button>
               </Link>
               <Link href="/products" className="flex-1">
                 <Button className="w-full h-12 gap-2" size="lg">
                   <Sparkles className="h-5 w-5" />
-                  Continue Shopping
+                  {t('continueShopping', language)}
                 </Button>
               </Link>
             </div>
@@ -479,10 +482,10 @@ export default function CheckoutPage() {
               <ChevronLeft className="h-5 w-5" />
               <span className="hidden sm:inline">Back to Cart</span>
             </Link>
-            <h1 className="text-lg font-bold">Secure Checkout</h1>
+            <h1 className="text-lg font-bold">{t('secureCheckout', language)}</h1>
             <div className="flex items-center gap-1 text-green-600 text-sm">
               <ShieldCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Secure</span>
+              <span className="hidden sm:inline">{t('secure', language)}</span>
             </div>
           </div>
         </div>
@@ -545,16 +548,14 @@ export default function CheckoutPage() {
                       <div
                         key={addr.id}
                         onClick={() => handleSelectAddress(addr)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                          selectedAddressId === addr.id
-                            ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
-                            : 'border-gray-200 hover:border-primary/50 hover:shadow-sm'
-                        }`}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${selectedAddressId === addr.id
+                          ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                          : 'border-gray-200 hover:border-primary/50 hover:shadow-sm'
+                          }`}
                       >
                         <div className="flex items-start gap-4">
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
-                            selectedAddressId === addr.id ? 'bg-primary text-white' : 'bg-gray-100'
-                          }`}>
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${selectedAddressId === addr.id ? 'bg-primary text-white' : 'bg-gray-100'
+                            }`}>
                             {index === 0 ? <Home className="h-5 w-5" /> : <Building2 className="h-5 w-5" />}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -572,9 +573,8 @@ export default function CheckoutPage() {
                               </p>
                             )}
                           </div>
-                          <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                            selectedAddressId === addr.id ? 'border-primary bg-primary' : 'border-gray-300'
-                          }`}>
+                          <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedAddressId === addr.id ? 'border-primary bg-primary' : 'border-gray-300'
+                            }`}>
                             {selectedAddressId === addr.id && <Check className="h-4 w-4 text-white" />}
                           </div>
                         </div>
@@ -715,11 +715,10 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => setSelectedDate('today')}
-                      className={`p-3 rounded-xl border-2 text-center transition-all ${
-                        selectedDate === 'today'
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-gray-200 hover:border-primary/50'
-                      }`}
+                      className={`p-3 rounded-xl border-2 text-center transition-all ${selectedDate === 'today'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-gray-200 hover:border-primary/50'
+                        }`}
                     >
                       <p className="font-semibold">Today</p>
                       <p className="text-sm text-muted-foreground">
@@ -728,11 +727,10 @@ export default function CheckoutPage() {
                     </button>
                     <button
                       onClick={() => setSelectedDate('tomorrow')}
-                      className={`p-3 rounded-xl border-2 text-center transition-all ${
-                        selectedDate === 'tomorrow'
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-gray-200 hover:border-primary/50'
-                      }`}
+                      className={`p-3 rounded-xl border-2 text-center transition-all ${selectedDate === 'tomorrow'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-gray-200 hover:border-primary/50'
+                        }`}
                     >
                       <p className="font-semibold">Tomorrow</p>
                       <p className="text-sm text-muted-foreground">
@@ -753,11 +751,10 @@ export default function CheckoutPage() {
                       <button
                         key={slot.id}
                         onClick={() => setSelectedSlot(slot.id)}
-                        className={`p-4 rounded-xl border-2 text-left transition-all ${
-                          selectedSlot === slot.id
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-gray-200 hover:border-primary/50'
-                        }`}
+                        className={`p-4 rounded-xl border-2 text-left transition-all ${selectedSlot === slot.id
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-gray-200 hover:border-primary/50'
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -778,9 +775,8 @@ export default function CheckoutPage() {
                             ) : (
                               <span className="font-semibold">{formatPrice(slot.price)}</span>
                             )}
-                            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                              selectedSlot === slot.id ? 'border-primary bg-primary' : 'border-gray-300'
-                            }`}>
+                            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${selectedSlot === slot.id ? 'border-primary bg-primary' : 'border-gray-300'
+                              }`}>
                               {selectedSlot === slot.id && <Check className="h-3 w-3 text-white" />}
                             </div>
                           </div>
@@ -810,11 +806,10 @@ export default function CheckoutPage() {
                       <button
                         key={method.id}
                         onClick={() => setSelectedPayment(method.id)}
-                        className={`p-4 rounded-xl border-2 text-left transition-all ${
-                          selectedPayment === method.id
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-gray-200 hover:border-primary/50'
-                        }`}
+                        className={`p-4 rounded-xl border-2 text-left transition-all ${selectedPayment === method.id
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-gray-200 hover:border-primary/50'
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -826,9 +821,8 @@ export default function CheckoutPage() {
                               <p className="text-sm text-muted-foreground">{method.description}</p>
                             </div>
                           </div>
-                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                            selectedPayment === method.id ? 'border-primary bg-primary' : 'border-gray-300'
-                          }`}>
+                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${selectedPayment === method.id ? 'border-primary bg-primary' : 'border-gray-300'
+                            }`}>
                             {selectedPayment === method.id && <Check className="h-3 w-3 text-white" />}
                           </div>
                         </div>
@@ -925,11 +919,10 @@ export default function CheckoutPage() {
 
                   {/* Place Order Button */}
                   <Button
-                    className={`w-full h-14 text-base font-semibold ${
-                      selectedPayment === 'cod'
-                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
-                        : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-                    }`}
+                    className={`w-full h-14 text-base font-semibold ${selectedPayment === 'cod'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
+                      : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                      }`}
                     size="lg"
                     onClick={handlePlaceOrder}
                     disabled={isProcessing || paymentLoading || (!selectedAddressId && !showNewAddressForm)}
@@ -987,11 +980,10 @@ export default function CheckoutPage() {
             <p className="text-xl font-bold text-primary">{formatPrice(total)}</p>
           </div>
           <Button
-            className={`h-12 px-6 text-base font-semibold ${
-              selectedPayment === 'cod'
-                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
-                : 'bg-gradient-to-r from-green-500 to-green-600'
-            }`}
+            className={`h-12 px-6 text-base font-semibold ${selectedPayment === 'cod'
+              ? 'bg-gradient-to-r from-orange-500 to-orange-600'
+              : 'bg-gradient-to-r from-green-500 to-green-600'
+              }`}
             onClick={handlePlaceOrder}
             disabled={isProcessing || paymentLoading || (!selectedAddressId && !showNewAddressForm)}
           >

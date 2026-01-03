@@ -6,8 +6,11 @@ import { useEffect, useState } from 'react';
 import ProductCard from '@/components/product/ProductCard';
 import { medusa, Product } from '@/lib/medusa';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 export default function PopularProducts() {
+  const { language } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,14 +61,14 @@ export default function PopularProducts() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold">Popular This Week</h2>
-            <p className="text-sm text-muted-foreground">Most ordered by our customers</p>
+            <h2 className="text-xl sm:text-2xl font-bold">{t('popularThisWeek', language)}</h2>
+            <p className="text-sm text-muted-foreground">{t('mostOrderedByCustomers', language)}</p>
           </div>
           <Link
             href="/products?sort=popular"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            View All
+            {t('viewAll', language)}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>

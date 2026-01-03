@@ -34,6 +34,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { medusa, Product, ProductVariant, formatPrice, getVariantPrice } from '@/lib/medusa';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/product/ProductCard';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -49,6 +51,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const { language } = useLanguage();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -121,12 +124,12 @@ export default function ProductDetailPage() {
           <div className="h-24 w-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-6">
             <Fish className="h-12 w-12 text-gray-400" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Product not found</h1>
-          <p className="text-muted-foreground mb-6">The product you're looking for doesn't exist</p>
+          <h1 className="text-2xl font-bold mb-2">{t('noProductsFound', language)}</h1>
+          <p className="text-muted-foreground mb-6">{t('adjustSearchFilter', language)}</p>
           <Link href="/products">
             <Button size="lg" className="gap-2">
               <ChevronLeft className="h-4 w-4" />
-              Back to Products
+              {t('products', language)}
             </Button>
           </Link>
         </div>
@@ -135,10 +138,26 @@ export default function ProductDetailPage() {
   }
 
   const tamilName = product.subtitle || (product.metadata?.tamil_name as string) || '';
-  const freshness = (product.metadata?.freshness as string) || 'Fresh catch of the day';
+  const tamilDescription = (product.metadata?.tamil_description as string) || '';
+  const tamilFreshness = (product.metadata?.tamil_freshness as string) || '';
+
+  // Default freshness text with translation
+  const defaultFreshness = language === 'ta' ? 'இன்றைய புதிய பிடி' : 'Fresh catch of the day';
+  const freshness = (product.metadata?.freshness as string) || defaultFreshness;
   const rating = (product.metadata?.rating as number) || 4.5;
   const reviewCount = (product.metadata?.review_count as number) || Math.floor(Math.random() * 100 + 50);
   const bestFor = (product.metadata?.best_for as string[]) || ['Fry', 'Curry', 'Grill', 'Steam'];
+  const tamilBestFor = (product.metadata?.tamil_best_for as string[]) || [];
+
+  // Cooking method translation mapping
+  const cookingMethodTranslations: Record<string, string> = {
+    'Fry': 'வறுக்கவும்',
+    'Curry': 'குழம்பு',
+    'Grill': 'கிரில்',
+    'Steam': 'ஆவியில் வேகவைக்கவும்',
+    'Bake': 'பேக்',
+    'Roast': 'வறுக்கவும்',
+  };
   const nutritionalInfo = (product.metadata?.nutritional_info as Record<string, string>) || {
     calories: '100 kcal',
     protein: '20g',
@@ -166,14 +185,16 @@ export default function ProductDetailPage() {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-2 text-sm">
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
-              Home
+              {t('home', language)}
             </Link>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
             <Link href="/products" className="text-muted-foreground hover:text-primary transition-colors">
-              Products
+              {t('products', language)}
             </Link>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-primary truncate max-w-[200px]">{product.title}</span>
+            <span className="font-medium text-primary truncate max-w-[200px]">
+              {language === 'ta' && tamilName ? tamilName : product.title}
+            </span>
           </div>
         </div>
       </div>
@@ -182,7 +203,7 @@ export default function ProductDetailPage() {
         {/* Back Button - Mobile */}
         <Link href="/products" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6 lg:hidden">
           <ChevronLeft className="h-4 w-4" />
-          Back to Products
+          {t('products', language)}
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
@@ -200,7 +221,7 @@ export default function ProductDetailPage() {
               {/* Discount Badge */}
               {discountPercent > 0 && (
                 <Badge className="absolute top-4 left-4 bg-red-500 hover:bg-red-500 text-white text-sm font-bold px-3 py-1.5 shadow-lg">
-                  {discountPercent}% OFF
+                  {discountPercent}% {t('off', language)}
                 </Badge>
               )}
 
@@ -208,11 +229,10 @@ export default function ProductDetailPage() {
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <button
                   onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${
-                    isWishlisted
-                      ? 'bg-red-500 text-white'
-                      : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-                  }`}
+                  className={`h-11 w-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md ${isWishlisted
+                    ? 'bg-red-500 text-white'
+                    : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+                    }`}
                 >
                   <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
                 </button>
@@ -225,7 +245,7 @@ export default function ProductDetailPage() {
               <div className="absolute bottom-4 left-4">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-700">
                   <div className="h-2 w-2 rounded-full bg-green-500" />
-                  In Stock
+                  {t('inStock', language)}
                 </div>
               </div>
             </div>
@@ -237,11 +257,10 @@ export default function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative h-20 w-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200 bg-gray-50 ${
-                      selectedImage === index
-                        ? 'border-primary shadow-md ring-2 ring-primary/20'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
+                    className={`relative h-20 w-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200 bg-gray-50 ${selectedImage === index
+                      ? 'border-primary shadow-md ring-2 ring-primary/20'
+                      : 'border-transparent hover:border-gray-300'
+                      }`}
                   >
                     <Image
                       src={img}
@@ -260,13 +279,15 @@ export default function ProductDetailPage() {
             {/* Freshness Tag */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-medium">
               <Clock className="h-4 w-4" />
-              {freshness}
+              {language === 'ta' && tamilFreshness ? tamilFreshness : freshness}
             </div>
 
             {/* Title */}
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{product.title}</h1>
-              {tamilName && (
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                {language === 'ta' && tamilName ? tamilName : product.title}
+              </h1>
+              {language === 'en' && tamilName && (
                 <p className="text-xl text-muted-foreground mt-1">{tamilName}</p>
               )}
             </div>
@@ -278,17 +299,17 @@ export default function ProductDetailPage() {
                 <span className="font-bold text-amber-700">{rating}</span>
               </div>
               <span className="text-muted-foreground">
-                {reviewCount} reviews
+                {reviewCount} {language === 'ta' ? 'விமர்சனங்கள்' : 'reviews'}
               </span>
               <Separator orientation="vertical" className="h-5" />
-              <span className="text-green-600 font-medium">500+ sold</span>
+              <span className="text-green-600 font-medium">500+ {language === 'ta' ? 'விற்பனை' : 'sold'}</span>
             </div>
 
             {/* Price */}
             <div className="bg-gradient-to-r from-primary/10 to-transparent rounded-2xl p-5">
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-bold text-primary">{formatPrice(currentPrice)}</span>
-                <span className="text-lg text-muted-foreground">/kg</span>
+                <span className="text-lg text-muted-foreground">{t('perKgSlash', language)}</span>
                 {originalPrice && currentPrice < originalPrice && (
                   <span className="text-xl text-gray-400 line-through">
                     {formatPrice(originalPrice)}
@@ -297,7 +318,10 @@ export default function ProductDetailPage() {
               </div>
               {discountPercent > 0 && (
                 <p className="text-green-600 font-medium mt-1">
-                  You save {formatPrice(originalPrice - currentPrice)} ({discountPercent}% off)
+                  {language === 'ta'
+                    ? `நீங்கள் ${formatPrice(originalPrice - currentPrice)} சேமிக்கிறீர்கள் (${discountPercent}% தள்ளுபடி)`
+                    : `You save ${formatPrice(originalPrice - currentPrice)} (${discountPercent}% off)`
+                  }
                 </p>
               )}
             </div>
@@ -305,20 +329,37 @@ export default function ProductDetailPage() {
             {/* Variant Selection */}
             {product.variants && product.variants.length > 1 && (
               <div>
-                <h3 className="font-bold text-lg mb-3">Select Variant</h3>
+                <h3 className="font-bold text-lg mb-3">{language === 'ta' ? 'மாறுபாட்டைத் தேர்ந்தெடுக்கவும்' : 'Select Variant'}</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {product.variants.map((variant) => (
                     <button
                       key={variant.id}
                       onClick={() => setSelectedVariant(variant)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                        selectedVariant?.id === variant.id
-                          ? 'border-primary bg-primary/5 shadow-md'
-                          : 'border-gray-200 hover:border-primary/50'
-                      }`}
+                      className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${selectedVariant?.id === variant.id
+                        ? 'border-primary bg-primary/5 shadow-md'
+                        : 'border-gray-200 hover:border-primary/50'
+                        }`}
                     >
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold text-sm">{variant.title}</p>
+                        <p className="font-semibold text-sm">
+                          {language === 'ta'
+                            ? variant.title
+                              .replace(/Whole/gi, 'முழுவதும்')
+                              .replace(/Cleaned/gi, 'சுத்தம் செய்யப்பட்டது')
+                              .replace(/Cut\s+pieces/gi, 'துண்டுகள்')
+                              .replace(/Fillet/gi, 'ஃபில்லட்')
+                              .replace(/Sliced/gi, 'வெட்டப்பட்டது')
+                              .replace(/Pieces/gi, 'துண்டுகள்')
+                              .replace(/Boneless/gi, 'எலும்பு இல்லாமல்')
+                              .replace(/With\s+head/gi, 'தலையுடன்')
+                              .replace(/Without\s+head/gi, 'தலை இல்லாமல்')
+                              .replace(/With\s+skin/gi, 'தோலுடன்')
+                              .replace(/Without\s+skin/gi, 'தோல் இல்லாமல்')
+                              .replace(/(\d+)g\b/gi, '$1கி')
+                              .replace(/(\d+)\s*kg/gi, '$1 கிலோ')
+                            : variant.title
+                          }
+                        </p>
                         {selectedVariant?.id === variant.id && (
                           <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
                             <Check className="h-3 w-3 text-white" />
@@ -336,7 +377,7 @@ export default function ProductDetailPage() {
 
             {/* Quantity */}
             <div>
-              <h3 className="font-bold text-lg mb-3">Quantity</h3>
+              <h3 className="font-bold text-lg mb-3">{language === 'ta' ? 'அளவு' : 'Quantity'}</h3>
               <div className="flex items-center gap-4">
                 <div className="flex items-center bg-gray-100 rounded-xl p-1">
                   <Button
@@ -359,7 +400,7 @@ export default function ProductDetailPage() {
                   </Button>
                 </div>
                 <span className="text-muted-foreground text-sm">
-                  ({quantity} kg)
+                  ({quantity} {language === 'ta' ? 'கிலோ' : 'kg'})
                 </span>
               </div>
             </div>
@@ -368,12 +409,12 @@ export default function ProductDetailPage() {
             <div className="bg-white rounded-2xl p-5 shadow-lg border space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Price</p>
+                  <p className="text-sm text-muted-foreground">{t('total', language)}</p>
                   <p className="text-3xl font-bold text-primary">{formatPrice(totalPrice)}</p>
                 </div>
                 <Badge variant="secondary" className="bg-green-100 text-green-700 text-sm">
                   <Truck className="h-4 w-4 mr-1" />
-                  Free Delivery
+                  {t('freeDelivery', language)}
                 </Badge>
               </div>
 
@@ -387,19 +428,19 @@ export default function ProductDetailPage() {
                   {isAdding ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      Adding...
+                      {language === 'ta' ? 'சேர்க்கிறது...' : 'Adding...'}
                     </>
                   ) : (
                     <>
                       <ShoppingCart className="h-5 w-5" />
-                      Add to Cart
+                      {t('addToCart', language)}
                     </>
                   )}
                 </Button>
                 <Link href="/checkout" className="flex-1">
                   <Button size="lg" variant="outline" className="w-full h-14 text-base font-semibold border-2 border-primary text-primary hover:bg-primary hover:text-white">
                     <Zap className="h-5 w-5 mr-2" />
-                    Buy Now
+                    {language === 'ta' ? 'இப்போது வாங்கவும்' : 'Buy Now'}
                   </Button>
                 </Link>
               </div>
@@ -411,29 +452,29 @@ export default function ProductDetailPage() {
                 <div className="h-10 w-10 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2">
                   <Truck className="h-5 w-5 text-blue-600" />
                 </div>
-                <p className="text-xs font-semibold">Free Delivery</p>
-                <p className="text-xs text-muted-foreground">Above ₹300</p>
+                <p className="text-xs font-semibold">{t('freeDelivery', language)}</p>
+                <p className="text-xs text-muted-foreground">{t('onOrdersAbove', language)}</p>
               </div>
               <div className="text-center p-4 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
                   <Shield className="h-5 w-5 text-green-600" />
                 </div>
-                <p className="text-xs font-semibold">Fresh Guarantee</p>
-                <p className="text-xs text-muted-foreground">100% Quality</p>
+                <p className="text-xs font-semibold">{language === 'ta' ? 'புதிய உத்தரவாதம்' : 'Fresh Guarantee'}</p>
+                <p className="text-xs text-muted-foreground">{language === 'ta' ? '100% தரம்' : '100% Quality'}</p>
               </div>
               <div className="text-center p-4 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-2">
                   <Award className="h-5 w-5 text-amber-600" />
                 </div>
-                <p className="text-xs font-semibold">Premium Quality</p>
-                <p className="text-xs text-muted-foreground">Handpicked</p>
+                <p className="text-xs font-semibold">{language === 'ta' ? 'பிரீமியம் தரம்' : 'Premium Quality'}</p>
+                <p className="text-xs text-muted-foreground">{language === 'ta' ? 'கையால் தேர்ந்தெடுக்கப்பட்டது' : 'Handpicked'}</p>
               </div>
               <div className="text-center p-4 bg-white rounded-xl border">
                 <div className="h-10 w-10 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-2">
                   <RotateCcw className="h-5 w-5 text-purple-600" />
                 </div>
-                <p className="text-xs font-semibold">Easy Returns</p>
-                <p className="text-xs text-muted-foreground">If not satisfied</p>
+                <p className="text-xs font-semibold">{language === 'ta' ? 'எளிய திரும்பி அனுப்புதல்' : 'Easy Returns'}</p>
+                <p className="text-xs text-muted-foreground">{language === 'ta' ? 'திருப்தி இல்லாவிட்டால்' : 'If not satisfied'}</p>
               </div>
             </div>
           </div>
@@ -444,13 +485,13 @@ export default function ProductDetailPage() {
           <Tabs defaultValue="description" className="w-full">
             <TabsList className="w-full justify-start bg-white rounded-xl p-1 h-auto flex-wrap">
               <TabsTrigger value="description" className="rounded-lg px-6 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-                Description
+                {language === 'ta' ? 'விளக்கம்' : 'Description'}
               </TabsTrigger>
               <TabsTrigger value="nutrition" className="rounded-lg px-6 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-                Nutrition Facts
+                {language === 'ta' ? 'சத்து தகவல்' : 'Nutrition Facts'}
               </TabsTrigger>
               <TabsTrigger value="reviews" className="rounded-lg px-6 py-3 data-[state=active]:bg-primary data-[state=active]:text-white">
-                Reviews ({reviewCount})
+                {language === 'ta' ? 'விமர்சனங்கள்' : 'Reviews'} ({reviewCount})
               </TabsTrigger>
             </TabsList>
 
@@ -458,7 +499,9 @@ export default function ProductDetailPage() {
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6 md:p-8">
                   <div className="prose max-w-none">
-                    <p className="text-lg text-muted-foreground leading-relaxed">{product.description}</p>
+                    <p className="text-lg text-muted-foreground leading-relaxed">
+                      {language === 'ta' && tamilDescription ? tamilDescription : product.description}
+                    </p>
                   </div>
 
                   <Separator className="my-6" />
@@ -466,12 +509,12 @@ export default function ProductDetailPage() {
                   <div>
                     <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
                       <Leaf className="h-5 w-5 text-green-600" />
-                      Best Cooking Methods
+                      {language === 'ta' ? 'சிறந்த சமையல் முறைகள்' : 'Best Cooking Methods'}
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {bestFor.map((method) => (
                         <Badge key={method} className="px-4 py-2 text-sm bg-primary/10 text-primary hover:bg-primary/20">
-                          {method}
+                          {language === 'ta' ? (cookingMethodTranslations[method] || method) : method}
                         </Badge>
                       ))}
                     </div>
@@ -483,15 +526,15 @@ export default function ProductDetailPage() {
                     <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
                       <ThermometerSnowflake className="h-8 w-8 text-blue-600" />
                       <div>
-                        <p className="font-semibold">Storage</p>
-                        <p className="text-sm text-muted-foreground">Keep refrigerated at 0-4°C</p>
+                        <p className="font-semibold">{language === 'ta' ? 'சேமிப்பு' : 'Storage'}</p>
+                        <p className="text-sm text-muted-foreground">{language === 'ta' ? '0-4°C இல் குளிரூட்டி வைக்கவும்' : 'Keep refrigerated at 0-4°C'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
                       <Clock className="h-8 w-8 text-green-600" />
                       <div>
-                        <p className="font-semibold">Shelf Life</p>
-                        <p className="text-sm text-muted-foreground">Best consumed within 2-3 days</p>
+                        <p className="font-semibold">{language === 'ta' ? 'நீடித்து நிலைத்திருத்தல்' : 'Shelf Life'}</p>
+                        <p className="text-sm text-muted-foreground">{language === 'ta' ? '2-3 நாட்களுக்குள் பயன்படுத்தவும்' : 'Best consumed within 2-3 days'}</p>
                       </div>
                     </div>
                   </div>
@@ -502,38 +545,39 @@ export default function ProductDetailPage() {
             <TabsContent value="nutrition" className="mt-6">
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6 md:p-8">
-                  <h4 className="font-bold text-xl mb-6">Nutritional Information (per 100g)</h4>
+                  <h4 className="font-bold text-xl mb-6">
+                    {language === 'ta' ? 'சத்துக்கள் தகவல் (100 கிராம்க்கு)' : 'Nutritional Information (per 100g)'}
+                  </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="text-center p-6 bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl">
                       <p className="text-3xl font-bold text-red-600">
                         {nutritionalInfo.calories}
                       </p>
-                      <p className="text-sm text-muted-foreground mt-1">Calories</p>
+                      <p className="text-sm text-muted-foreground mt-1">{language === 'ta' ? 'கலோரிகள்' : 'Calories'}</p>
                     </div>
                     <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl">
                       <p className="text-3xl font-bold text-blue-600">
                         {nutritionalInfo.protein}
                       </p>
-                      <p className="text-sm text-muted-foreground mt-1">Protein</p>
+                      <p className="text-sm text-muted-foreground mt-1">{language === 'ta' ? 'புரதம்' : 'Protein'}</p>
                     </div>
                     <div className="text-center p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl">
                       <p className="text-3xl font-bold text-amber-600">
                         {nutritionalInfo.fat}
                       </p>
-                      <p className="text-sm text-muted-foreground mt-1">Fat</p>
+                      <p className="text-sm text-muted-foreground mt-1">{language === 'ta' ? 'கொழுப்பு' : 'Fat'}</p>
                     </div>
                     <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl">
                       <p className="text-3xl font-bold text-green-600">
                         {nutritionalInfo.omega3}
                       </p>
-                      <p className="text-sm text-muted-foreground mt-1">Omega-3</p>
+                      <p className="text-sm text-muted-foreground mt-1">{language === 'ta' ? 'ஒமேகா-3' : 'Omega-3'}</p>
                     </div>
                   </div>
 
                   <div className="mt-6 p-4 bg-blue-50 rounded-xl">
                     <p className="text-sm text-blue-800">
-                      <strong>Health Benefits:</strong> Rich in high-quality protein, omega-3 fatty acids, and essential vitamins.
-                      Supports heart health, brain function, and overall wellness.
+                      <strong>{language === 'ta' ? 'ஆரோக்கிய நன்மைகள்:' : 'Health Benefits:'}</strong> {language === 'ta' ? 'உயர்தர புரதம், ஒமேகா-3 கொழுப்பு அமிலங்கள் மற்றும் அத்தியாவசிய வைட்டமின்கள் நிறைந்தது. இதய ஆரோக்கியம், மூளை செயல்பாடு மற்றும் ஒட்டுமொத்த நல்வாழ்வை ஆதரிக்கிறது.' : 'Rich in high-quality protein, omega-3 fatty acids, and essential vitamins. Supports heart health, brain function, and overall wellness.'}
                     </p>
                   </div>
                 </CardContent>
@@ -550,16 +594,18 @@ export default function ProductDetailPage() {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`h-5 w-5 ${
-                              star <= Math.round(rating)
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-gray-300'
-                            }`}
+                            className={`h-5 w-5 ${star <= Math.round(rating)
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-gray-300'
+                              }`}
                           />
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Based on {reviewCount} reviews
+                        {language === 'ta'
+                          ? `${reviewCount} விமர்சனங்களின் அடிப்படையில்`
+                          : `Based on ${reviewCount} reviews`
+                        }
                       </p>
                     </div>
 
@@ -585,10 +631,15 @@ export default function ProductDetailPage() {
                   <Separator className="my-6" />
 
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">Be the first to review this product!</p>
+                    <p className="text-muted-foreground mb-4">
+                      {language === 'ta'
+                        ? 'இந்த பொருளை விமர்சிக்கும் முதல் நபர் ஆகுங்கள்!'
+                        : 'Be the first to review this product!'
+                      }
+                    </p>
                     <Button variant="outline" className="gap-2">
                       <Star className="h-4 w-4" />
-                      Write a Review
+                      {language === 'ta' ? 'விமர்சனம் எழுதுங்கள்' : 'Write a Review'}
                     </Button>
                   </div>
                 </CardContent>
@@ -601,10 +652,10 @@ export default function ProductDetailPage() {
         {relatedProducts.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl md:text-3xl font-bold">You May Also Like</h2>
+              <h2 className="text-2xl md:text-3xl font-bold">{language === 'ta' ? 'நீங்கள் விரும்பலாம்' : 'You May Also Like'}</h2>
               <Link href="/products">
                 <Button variant="ghost" className="gap-1">
-                  View All
+                  {t('viewAll', language)}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>

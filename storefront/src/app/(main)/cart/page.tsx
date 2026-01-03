@@ -28,6 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/medusa';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 export default function CartPage() {
   const { cart, isLoading, updateQuantity, removeFromCart } = useCart();
@@ -36,6 +38,7 @@ export default function CartPage() {
   const [discount, setDiscount] = useState(0);
   const [updatingItems, setUpdatingItems] = useState<Record<string, boolean>>({});
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const { language } = useLanguage();
 
   const handleUpdateQuantity = async (lineItemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -129,21 +132,21 @@ export default function CartPage() {
             <div className="h-32 w-32 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-6">
               <ShoppingBag className="h-16 w-16 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold mb-3">Your cart is empty</h1>
+            <h1 className="text-3xl font-bold mb-3">{t('yourCartIsEmpty', language)}</h1>
             <p className="text-muted-foreground mb-8 text-lg">
-              Discover our fresh catch and add some delicious fish to your cart!
+              {t('discoverFreshCatch', language)}
             </p>
             <Link href="/products">
               <Button size="lg" className="gap-2 h-14 px-8 text-base font-semibold shadow-lg">
                 <Sparkles className="h-5 w-5" />
-                Explore Products
+                {t('exploreProducts', language)}
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
 
             {/* Suggestions */}
             <div className="mt-12 pt-8 border-t">
-              <p className="text-sm text-muted-foreground mb-4">Popular categories</p>
+              <p className="text-sm text-muted-foreground mb-4">{t('popularCategories', language)}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {['Sea Fish', 'Prawns', 'Crabs', 'River Fish'].map((cat) => (
                   <Link key={cat} href={`/products?category=${cat.toLowerCase().replace(' ', '-')}`}>
@@ -169,10 +172,10 @@ export default function CartPage() {
             <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
               <ShoppingBag className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Shopping Cart</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">{t('shoppingCart', language)}</h1>
           </div>
           <p className="text-primary-foreground/80">
-            {cart.items.length} {cart.items.length === 1 ? 'item' : 'items'} in your cart
+            {cart.items.length} {cart.items.length === 1 ? t('itemInCart', language) : t('itemsInCart', language)}
           </p>
         </div>
       </div>
@@ -223,7 +226,7 @@ export default function CartPage() {
                         />
                         {index === 0 && (
                           <Badge className="absolute top-2 left-2 bg-primary text-xs">
-                            Best Seller
+                            {t('bestSeller', language)}
                           </Badge>
                         )}
                       </div>
@@ -237,7 +240,9 @@ export default function CartPage() {
                             href={`/products/${item.product?.handle || item.id}`}
                             className="font-bold text-lg hover:text-primary transition-colors line-clamp-1"
                           >
-                            {item.title}
+                            {language === 'ta' && item.product?.metadata?.tamil_name
+                              ? (item.product.metadata.tamil_name as string)
+                              : item.title}
                           </Link>
                           {item.variant?.title && (
                             <p className="text-sm text-muted-foreground mt-0.5">
@@ -247,7 +252,7 @@ export default function CartPage() {
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
                               <Clock className="h-3 w-3 mr-1" />
-                              Fresh
+                              {t('fresh', language)}
                             </Badge>
                           </div>
                         </div>
@@ -313,11 +318,11 @@ export default function CartPage() {
               <Link href="/products">
                 <Button variant="outline" className="gap-2 rounded-xl">
                   <Fish className="h-4 w-4" />
-                  Continue Shopping
+                  {t('continueShopping', language)}
                 </Button>
               </Link>
               <p className="text-sm text-muted-foreground hidden sm:block">
-                {cart.items.length} items
+                {cart.items.length} {t('items', language)}
               </p>
             </div>
           </div>
@@ -328,7 +333,7 @@ export default function CartPage() {
               <CardHeader className="bg-gradient-to-r from-gray-50 to-white pb-4">
                 <CardTitle className="flex items-center gap-2">
                   <BadgePercent className="h-5 w-5 text-primary" />
-                  Order Summary
+                  {t('orderSummary', language)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5 p-5">
@@ -336,7 +341,7 @@ export default function CartPage() {
                 <div>
                   <label className="text-sm font-semibold mb-2 block flex items-center gap-2">
                     <Gift className="h-4 w-4 text-primary" />
-                    Have a Coupon?
+                    {t('haveCoupon', language)}
                   </label>
                   {appliedCoupon ? (
                     <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-xl">
@@ -361,7 +366,7 @@ export default function CartPage() {
                   ) : (
                     <div className="flex gap-2">
                       <Input
-                        placeholder="Enter coupon code"
+                        placeholder={t('enterCouponCode', language)}
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         className="h-11 rounded-xl uppercase"
@@ -375,7 +380,7 @@ export default function CartPage() {
                         {isApplyingCoupon ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          'Apply'
+                          t('apply', language)
                         )}
                       </Button>
                     </div>
@@ -405,7 +410,7 @@ export default function CartPage() {
                 {/* Price Breakdown */}
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal ({cart.items.length} items)</span>
+                    <span className="text-muted-foreground">{t('subtotal', language)} ({cart.items.length} {t('items', language)})</span>
                     <span className="font-medium">{formatPrice(subtotal)}</span>
                   </div>
                   {discount > 0 && (
@@ -418,9 +423,9 @@ export default function CartPage() {
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delivery</span>
+                    <span className="text-muted-foreground">{t('delivery', language)}</span>
                     {deliveryCharge === 0 ? (
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">FREE</Badge>
+                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('free', language)}</Badge>
                     ) : (
                       <span className="font-medium">{formatPrice(deliveryCharge)}</span>
                     )}
@@ -432,8 +437,8 @@ export default function CartPage() {
                 {/* Total */}
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="text-lg font-bold">Total</span>
-                    <p className="text-xs text-muted-foreground">Inclusive of all taxes</p>
+                    <span className="text-lg font-bold">{t('total', language)}</span>
+                    <p className="text-xs text-muted-foreground">{t('inclusiveTaxes', language)}</p>
                   </div>
                   <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
                 </div>
@@ -441,7 +446,7 @@ export default function CartPage() {
                 {/* Checkout Button */}
                 <Link href="/checkout" className="block">
                   <Button className="w-full h-14 text-base font-semibold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg rounded-xl gap-2">
-                    Proceed to Checkout
+                    {t('proceedToCheckout', language)}
                     <ChevronRight className="h-5 w-5" />
                   </Button>
                 </Link>
@@ -450,11 +455,11 @@ export default function CartPage() {
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <ShieldCheck className="h-4 w-4 text-green-600" />
-                    <span>Secure Checkout</span>
+                    <span>{t('secureCheckout', language)}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Truck className="h-4 w-4 text-blue-600" />
-                    <span>Fast Delivery</span>
+                    <span>{t('fastDelivery', language)}</span>
                   </div>
                 </div>
               </CardContent>

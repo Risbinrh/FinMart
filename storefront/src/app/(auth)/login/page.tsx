@@ -21,6 +21,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 function LoginForm() {
   const router = useRouter();
@@ -36,6 +38,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { language } = useLanguage();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -110,10 +113,10 @@ function LoginForm() {
           </Link>
 
           <h1 className="text-4xl font-bold mb-4">
-            Fresh Fish,<br />Delivered Daily
+            {t('freshFishDeliveredDaily', language)}
           </h1>
           <p className="text-lg text-primary-foreground/80 mb-8">
-            Sign in to order the freshest seafood in Chennai, straight from the coast to your kitchen.
+            {t('signInOrder', language)}
           </p>
         </div>
 
@@ -123,8 +126,8 @@ function LoginForm() {
               <Truck className="h-6 w-6" />
             </div>
             <div>
-              <p className="font-semibold">Free Delivery</p>
-              <p className="text-sm text-primary-foreground/70">On orders above ₹300</p>
+              <p className="font-semibold">{t('freeDelivery', language)}</p>
+              <p className="text-sm text-primary-foreground/70">{t('onOrdersAbove', language)}</p>
             </div>
           </div>
           <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur rounded-xl">
@@ -132,8 +135,8 @@ function LoginForm() {
               <Clock className="h-6 w-6" />
             </div>
             <div>
-              <p className="font-semibold">Same Day Delivery</p>
-              <p className="text-sm text-primary-foreground/70">Order before 10 PM</p>
+              <p className="font-semibold">{t('sameDayDelivery', language)}</p>
+              <p className="text-sm text-primary-foreground/70">{t('orderBefore10', language)}</p>
             </div>
           </div>
           <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur rounded-xl">
@@ -141,8 +144,8 @@ function LoginForm() {
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <p className="font-semibold">Quality Guaranteed</p>
-              <p className="text-sm text-primary-foreground/70">100% fresh or money back</p>
+              <p className="font-semibold">{t('qualityGuaranteed', language)}</p>
+              <p className="text-sm text-primary-foreground/70">{t('freshOrMoneyBack', language)}</p>
             </div>
           </div>
         </div>
@@ -157,8 +160,8 @@ function LoginForm() {
                 <Fish className="h-8 w-8 text-white" />
               </div>
             </Link>
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <CardDescription className="text-base">Sign in to your FreshCatch account</CardDescription>
+            <CardTitle className="text-2xl font-bold">{t('welcomeBack', language)}</CardTitle>
+            <CardDescription className="text-base">{t('signInAccount', language)}</CardDescription>
           </CardHeader>
 
           <CardContent className="pt-4">
@@ -170,7 +173,7 @@ function LoginForm() {
               )}
 
               <div>
-                <label className="text-sm font-semibold mb-2 block">Email Address</label>
+                <label className="text-sm font-semibold mb-2 block">{t('emailAddress', language)}</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
@@ -186,13 +189,13 @@ function LoginForm() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold mb-2 block">Password</label>
+                <label className="text-sm font-semibold mb-2 block">{t('password', language)}</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    placeholder="Enter your password"
+                    placeholder={t('passwordPlaceholder', language)}
                     value={formData.password}
                     onChange={handleChange}
                     className="pl-12 pr-12 h-12 rounded-xl text-base"
@@ -220,7 +223,7 @@ function LoginForm() {
                   </>
                 ) : (
                   <>
-                    Sign In
+                    {t('signIn', language)}
                     <ArrowRight className="h-5 w-5 ml-2" />
                   </>
                 )}
@@ -230,10 +233,10 @@ function LoginForm() {
               <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="h-4 w-4 text-blue-600" />
-                  <span className="font-semibold text-blue-800 text-sm">Demo Account</span>
+                  <span className="font-semibold text-blue-800 text-sm">{t('demoAccount', language)}</span>
                 </div>
-                <p className="text-blue-700 text-sm">Email: demo@freshcatch.in</p>
-                <p className="text-blue-700 text-sm">Password: demo1234</p>
+                <p className="text-blue-700 text-sm">{t('email', language)}: demo@freshcatch.in</p>
+                <p className="text-blue-700 text-sm">{t('password', language)}: demo1234</p>
               </div>
 
               <div className="relative">
@@ -241,13 +244,13 @@ function LoginForm() {
                   <div className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-muted-foreground">New to FreshCatch?</span>
+                  <span className="px-4 bg-white text-muted-foreground">{t('newToFreshCatch', language)}</span>
                 </div>
               </div>
 
               <Link href="/register" className="block">
                 <Button variant="outline" className="w-full h-12 text-base font-semibold rounded-xl border-2">
-                  Create an Account
+                  {t('createAccount', language)}
                 </Button>
               </Link>
             </form>

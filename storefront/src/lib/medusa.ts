@@ -293,7 +293,7 @@ class MedusaClient {
 
   async getProductByHandle(handle: string): Promise<{ products: Product[] }> {
     try {
-      return await this.fetch(`/store/products?handle=${handle}&region_id=${REGION_ID}&fields=*variants.calculated_price`);
+      return await this.fetch(`/store/products?handle=${handle}&region_id=${REGION_ID}&fields=*variants.calculated_price,*metadata,*subtitle,*categories,*tags,*images`);
     } catch {
       return { products: [] };
     }
@@ -330,7 +330,8 @@ class MedusaClient {
 
   async getCart(cartId: string): Promise<{ cart: Cart } | null> {
     try {
-      return await this.fetch(`/store/carts/${cartId}`);
+      // Include product metadata in cart items for translations
+      return await this.fetch(`/store/carts/${cartId}?fields=*items.product`);
     } catch {
       return null;
     }
@@ -342,7 +343,8 @@ class MedusaClient {
     quantity: number
   ): Promise<{ cart: Cart } | null> {
     try {
-      return await this.fetch(`/store/carts/${cartId}/line-items`, {
+      // Include product metadata for translations
+      return await this.fetch(`/store/carts/${cartId}/line-items?fields=*items.product`, {
         method: 'POST',
         body: JSON.stringify({ variant_id: variantId, quantity }),
       });
@@ -357,7 +359,8 @@ class MedusaClient {
     quantity: number
   ): Promise<{ cart: Cart } | null> {
     try {
-      return await this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}`, {
+      // Include product metadata for translations
+      return await this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}?fields=*items.product`, {
         method: 'POST',
         body: JSON.stringify({ quantity }),
       });
@@ -368,7 +371,8 @@ class MedusaClient {
 
   async removeFromCart(cartId: string, lineItemId: string): Promise<{ cart: Cart } | null> {
     try {
-      return await this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}`, {
+      // Include product metadata for translations
+      return await this.fetch(`/store/carts/${cartId}/line-items/${lineItemId}?fields=*items.product`, {
         method: 'DELETE',
       });
     } catch {

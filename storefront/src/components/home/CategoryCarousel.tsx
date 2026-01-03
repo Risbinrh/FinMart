@@ -5,8 +5,11 @@ import Image from 'next/image';
 import { useRef, useEffect, useState } from 'react';
 import { medusa, ProductCategory } from '@/lib/medusa';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/lib/translations';
 
 export default function CategoryCarousel() {
+  const { language } = useLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [categoryImages, setCategoryImages] = useState<Record<string, string>>({});
@@ -99,8 +102,8 @@ export default function CategoryCarousel() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gradient mb-1">Shop by Category</h2>
-            <p className="text-sm text-muted-foreground">Fresh catch from every category</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gradient mb-1">{t('shopByCategory', language)}</h2>
+            <p className="text-sm text-muted-foreground">{t('freshCatchFromEveryCategory', language)}</p>
           </div>
 
         </div>
@@ -130,13 +133,10 @@ export default function CategoryCarousel() {
                 </div>
                 <div className="text-center space-y-1">
                   <h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors">
-                    {category.name}
+                    {language === 'ta' && typeof category.metadata?.tamil_name === 'string'
+                      ? category.metadata.tamil_name
+                      : category.name}
                   </h3>
-                  {typeof category.metadata?.tamil_name === 'string' && (
-                    <p className="text-xs text-muted-foreground group-hover:text-secondary-foreground/70 transition-colors">
-                      {category.metadata.tamil_name}
-                    </p>
-                  )}
                 </div>
               </div>
             </Link>
